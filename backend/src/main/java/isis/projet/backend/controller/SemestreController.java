@@ -36,7 +36,8 @@ public class SemestreController {
     public Semestre updateSemestre(@PathVariable Integer id, @RequestBody Semestre updated) {
         return semestreRepository.findById(id)
                 .map(s -> {
-                    s.setDateSemestre(updated.getDateSemestre());
+                    s.setDateDebutSemestre(updated.getDateDebutSemestre());
+                    s.setDateFinSemestre(updated.getDateFinSemestre());
                     s.setNbSemestre(updated.getNbSemestre());
                     return semestreRepository.save(s);
                 })

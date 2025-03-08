@@ -26,8 +26,11 @@ public class Semestre {
     @Column(name = "id_semestre")
     private Integer idSemestre;
 
-    @Column(name = "dateSemestre")
-    private Date dateSemestre;
+    @Column(name = "dateDebutSemestre")
+    private Date dateDebutSemestre;
+
+    @Column(name = "dateFinSemestre")
+    private Date dateFinSemestre;
 
     @Column(name = "nbSemestre")
     private Integer nbSemestre;

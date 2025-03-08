@@ -1,4 +1,4 @@
-<!-- src/components/Sidebar.vue -->
+<!--src/components/Sidebar.vue &ndash;&gt;-->
 <template>
   <aside class="sidebar">
     <!-- Zone utilisateur sans photo -->
@@ -23,7 +23,6 @@
 </template>
 
 <script setup>
-/* Pas de logique particulière ici */
 </script>
 
 <style scoped>

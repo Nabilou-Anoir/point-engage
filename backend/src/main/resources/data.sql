@@ -46,23 +46,23 @@ INSERT INTO etudiant (nom, prenom, email, promotion)
 VALUES ('Moreau', 'Emma', 'emma.moreau@example.com', '2025');
 
 --table semestrre
-INSERT INTO semestre (date_Semestre, nb_Semestre)
-VALUES ('2025-02-01', 1);
+INSERT INTO semestre (date_Debut_Semestre,date_Fin_Semestre, nb_Semestre)
+VALUES ('2025-02-01', '2025-06-01','1');
 
-INSERT INTO semestre (date_Semestre, nb_Semestre)
-VALUES ('2025-02-02', 2);
+INSERT INTO semestre (date_Debut_Semestre,date_Fin_Semestre, nb_Semestre)
+VALUES ('2025-06-02','2025-12-02', 2);
 
-INSERT INTO semestre (date_Semestre, nb_Semestre)
-VALUES ('2025-02-03', 3);
+INSERT INTO semestre (date_Debut_Semestre,date_Fin_Semestre, nb_Semestre)
+VALUES ('2026-02-03','2025-02-03', 3);
 
-INSERT INTO semestre (date_Semestre, nb_Semestre)
-VALUES ('2025-02-04', 4);
+INSERT INTO semestre (date_Debut_Semestre,date_Fin_Semestre, nb_Semestre)
+VALUES ('2025-02-04','2025-06-04', 4);
 
-INSERT INTO semestre (date_Semestre, nb_Semestre)
-VALUES ('2025-02-01', 5);
+INSERT INTO semestre (date_Debut_Semestre,date_Fin_Semestre, nb_Semestre)
+VALUES ('2025-02-01','2025-06-01', 5);
 
-INSERT INTO semestre (date_Semestre, nb_Semestre)
-VALUES ('2025-02-01', 6);
+INSERT INTO semestre (date_Debut_Semestre,date_Fin_Semestre, nb_Semestre)
+VALUES ('2025-02-01','2025-02-01',6);
 
 -- table participe
 
