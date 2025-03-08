@@ -75,4 +75,8 @@ public class ParticipeController {
         ParticipeKey key = new ParticipeKey(idEtudiant, idAction, idSemestre);
         participeRepository.deleteById(key);
     }
+    @GetMapping("/by-etudiant/{idEtudiant}")
+    public List<Participe> getParticipationsByEtudiant(@PathVariable Integer idEtudiant) {
+        return participeRepository.findByIdIdEtudiant(idEtudiant);
+    }
 }

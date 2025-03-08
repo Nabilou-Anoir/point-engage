@@ -15,9 +15,6 @@
       <router-link to="/historique-fiches" class="menu-item">
         Consulter l'historique des fiches
       </router-link>
-      <router-link to="/activite-hors-ref" class="menu-item">
-        Proposer une activité hors référentiel
-      </router-link>
     </nav>
   </aside>
 </template>

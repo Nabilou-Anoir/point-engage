@@ -1,10 +1,14 @@
 @import './base.css';
 
 #app {
-  max-width: 1280px;
-  margin: 0 auto;
+  /* Suppression de la largeur max et centrage automatique */
+  margin: 0;
   padding: 2rem;
   font-weight: normal;
+  /* Utilisation de flex pour une disposition en colonne */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 a,
@@ -21,6 +25,7 @@ a,
   }
 }
 
+/* Optionnel : en cas d'écran large, on continue d'utiliser une disposition en colonne */
 @media (min-width: 1024px) {
   body {
     display: flex;
@@ -28,8 +33,9 @@ a,
   }
 
   #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
     padding: 0 2rem;
   }
 }

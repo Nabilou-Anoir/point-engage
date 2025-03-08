@@ -7,11 +7,7 @@
         <label>Étudiant <span class="required">*</span></label>
         <select v-model="selectionEtudiant" required>
           <option disabled value="">-- Sélectionnez votre nom et prénom --</option>
-          <option
-            v-for="et in etudiants"
-            :key="et.idEtudiant"
-            :value="et.idEtudiant"
-          >
+          <option v-for="et in etudiants" :key="et.idEtudiant" :value="et.idEtudiant">
             {{ et.nom }} {{ et.prenom }}
           </option>
         </select>
@@ -28,11 +24,7 @@
         <label>Semestre <span class="required">*</span></label>
         <select v-model="selectionSemestre" required>
           <option disabled value="">-- Sélectionnez un semestre --</option>
-          <option
-            v-for="sem in semestres"
-            :key="sem.idSemestre"
-            :value="sem.idSemestre"
-          >
+          <option v-for="sem in semestres" :key="sem.idSemestre" :value="sem.idSemestre">
             S{{ sem.nbSemestre }}
           </option>
         </select>
@@ -43,11 +35,7 @@
         <label>Référentiel <span class="required">*</span></label>
         <select v-model="selectionReferentiel" required>
           <option disabled value="">-- Sélectionnez un référentiel --</option>
-          <option
-            v-for="ref in referentiels"
-            :key="ref.idReferentiel"
-            :value="ref.idReferentiel"
-          >
+          <option v-for="ref in referentiels" :key="ref.idReferentiel" :value="ref.idReferentiel">
             {{ ref.nom }}
           </option>
         </select>
@@ -58,11 +46,7 @@
         <label>Action <span class="required">*</span></label>
         <select v-model="selectionAction" required>
           <option disabled value="">-- Sélectionnez une action --</option>
-          <option
-            v-for="act in actions"
-            :key="act.idAction"
-            :value="act.idAction"
-          >
+          <option v-for="act in actions" :key="act.idAction" :value="act.idAction">
             {{ act.nom }}
           </option>
         </select>
@@ -216,8 +200,8 @@ function handleCancel() {
 
 <style scoped>
 .fiche-form-container {
-  max-width: 700px;
-  margin: 20px auto;
+  max-width: 700px; /* largeur réduite */
+  margin: 40px auto; /* centré horizontalement avec une marge supérieure et inférieure */
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;

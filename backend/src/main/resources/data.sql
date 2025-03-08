@@ -64,6 +64,18 @@ VALUES ('2025-02-01','2025-06-01', 5);
 INSERT INTO semestre (date_Debut_Semestre,date_Fin_Semestre, nb_Semestre)
 VALUES ('2025-02-01','2025-02-01',6);
 
+INSERT INTO semestre (date_Debut_Semestre, date_Fin_Semestre, nb_Semestre)
+VALUES ('2025-12-03', '2026-06-03', 7);
+
+INSERT INTO semestre (date_Debut_Semestre, date_Fin_Semestre, nb_Semestre)
+VALUES ('2026-06-04', '2026-12-04', 8);
+
+INSERT INTO semestre (date_Debut_Semestre, date_Fin_Semestre, nb_Semestre)
+VALUES ('2027-02-01', '2027-06-01', 9);
+
+INSERT INTO semestre (date_Debut_Semestre, date_Fin_Semestre, nb_Semestre)
+VALUES ('2027-06-02', '2027-12-02', 10);
+
 -- table participe
 
 INSERT INTO participe (id_etudiant, id_action, id_semestre, total_Points, nb_Participation, date_Debut_Participation, date_Fin_Participation, description_Participation, statut)
