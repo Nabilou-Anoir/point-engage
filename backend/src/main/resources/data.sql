@@ -82,7 +82,7 @@ INSERT INTO participe (id_etudiant, id_action, id_semestre, total_Points, nb_Par
 VALUES (1, 1, 1, 0.50, 1, '2025-02-01', '2025-02-02', 'Participation réussie', TRUE);
 
 INSERT INTO participe (id_etudiant, id_action, id_semestre, total_Points, nb_Participation, date_Debut_Participation, date_Fin_Participation, description_Participation, statut)
-VALUES (2, 2, 2, 0.40, 2, '2025-02-02', '2025-02-03', 'Participation moyenne', FALSE);
+VALUES (2, 2, 2, 0.00, 2, '2025-02-02', '2025-02-03', 'Participation moyenne', FALSE);
 
 INSERT INTO participe (id_etudiant, id_action, id_semestre, total_Points, nb_Participation, date_Debut_Participation, date_Fin_Participation, description_Participation, statut)
 VALUES (3, 3, 3, 0.30, 1, '2025-02-03', '2025-02-04', 'Participation satisfaisante', TRUE);

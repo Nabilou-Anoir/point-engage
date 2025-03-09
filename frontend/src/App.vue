@@ -2,8 +2,6 @@
 <template>
 
   <div id="app">
-    <!-- Barre supérieure -->
-
     <Topbar />
 
     <div class="layout">
