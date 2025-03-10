@@ -81,10 +81,10 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 // Importation des classes depuis le dossier 'classe'
-import { Etudiant } from '../classe/Etudiant.js'
-import { Semestre } from '../classe/Semestre.js'
-import { Referentiel } from '../classe/Referentiel.js'
-import { Action } from '../classe/Action.js'
+import { Etudiant } from '../../classe/Etudiant.js'
+import { Semestre } from '../../classe/Semestre.js'
+import { Referentiel } from '../../classe/Referentiel.js'
+import { Action } from '../../classe/Action.js'
 
 const router = useRouter()
 

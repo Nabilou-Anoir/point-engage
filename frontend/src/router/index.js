@@ -2,15 +2,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 // Importez vos vues existantes
-import AccueilView from '@/views/AccueilView.vue'
-import NotificationsView from '@/views/NotificationsView.vue'
-import ProfilView from '@/views/ProfilView.vue'
-import SaisirFicheView from '@/views/SaisirFicheView.vue'
-import HistoriqueFichesView from '@/views/HistoriqueFichesView.vue'
-import ActiviteHorsRefView from '@/views/ActiviteHorsRefView.vue'
+import AccueilView from '@/views/EtudiantView/AccueilView.vue'
+import NotificationsView from '@/views/EtudiantView/NotificationsView.vue'
+import ProfilView from '@/views/EtudiantView/ProfilView.vue'
+import SaisirFicheView from '@/views/EtudiantView/SaisirFicheView.vue'
+import HistoriqueFichesView from '@/views/EtudiantView/HistoriqueFichesView.vue'
+import ActiviteHorsRefView from '@/views/EtudiantView/ActiviteHorsRefView.vue'
 
 // Ajoutez l'import de votre nouvelle vue pour le dispositif
-import DispositifView from '@/views/DispositifView.vue'
+import DispositifView from '@/views/EtudiantView/DispositifView.vue'
 
 const routes = [
   { path: '/', component: AccueilView },
