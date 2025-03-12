@@ -1,25 +1,24 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 
-// Importez vos vues existantes
-import AccueilView from '@/views/EtudiantView/AccueilView.vue'
+// Import des composants de vue
+import RoleSelection from '@/views/RoleSelection.vue'
+import AccueilEtudiantView from '@/views/EtudiantView/AccueilEtudiantView.vue'
 import NotificationsView from '@/views/EtudiantView/NotificationsView.vue'
 import ProfilView from '@/views/EtudiantView/ProfilView.vue'
 import SaisirFicheView from '@/views/EtudiantView/SaisirFicheView.vue'
 import HistoriqueFichesView from '@/views/EtudiantView/HistoriqueFichesView.vue'
-import ActiviteHorsRefView from '@/views/EtudiantView/ActiviteHorsRefView.vue'
-
-// Ajoutez l'import de votre nouvelle vue pour le dispositif
 import DispositifView from '@/views/EtudiantView/DispositifView.vue'
 
 const routes = [
-  { path: '/', component: AccueilView },
+  // Rediriger la racine vers la page de sélection de rôle
+  { path: '/', redirect: '/role' },
+  { path: '/role', component: RoleSelection },
+  { path: '/etudiant', name: 'AccueilEtudiant', component: AccueilEtudiantView },
   { path: '/notifications', component: NotificationsView },
   { path: '/profil', component: ProfilView },
   { path: '/saisir-fiche', component: SaisirFicheView },
   { path: '/historique-fiches', component: HistoriqueFichesView },
-  { path: '/activite-hors-ref', component: ActiviteHorsRefView },
-  // Nouvelle route pour le dispositif Ingénieur Engagé
   { path: '/dispositif', component: DispositifView }
 ]
 

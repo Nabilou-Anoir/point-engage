@@ -3,8 +3,8 @@
   <aside class="sidebar">
     <!-- Zone utilisateur sans photo -->
     <div class="user-info">
-      <h3 class="user-name">Anoir Nabilou</h3>
-      <p class="user-promo">promo FIE3</p>
+      <h3 class="user-name">Bonjour</h3>
+      <p class="user-promo">Bienvenue sur votre session</p>
     </div>
 
     <!-- Menu latéral -->

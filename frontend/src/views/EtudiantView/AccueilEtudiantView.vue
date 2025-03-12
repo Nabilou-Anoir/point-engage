@@ -1,4 +1,4 @@
-<!-- src/views/AccueilView.vue -->
+<!-- src/views/EtudiantView/AccueilEtudiantView.vue -->
 <template>
   <div class="accueil-container">
     <h2>Accueil Étudiant</h2>
@@ -21,7 +21,7 @@
       <div class="stats-cards">
         <div class="stat-card">
           <h4>Total de points obtenus</h4>
-          <p>{{ totalPointsValides}}</p>
+          <p>{{ totalPointsValides }}</p>
         </div>
         <div class="stat-card">
           <h4>Nombre de participations</h4>
@@ -56,7 +56,7 @@ const nombreParticipations = ref(0)
 const nbFichesEnCours = ref(0)
 const nomEtudiantSelectionne = ref('')
 
-// La condition pour afficher les statistiques (on affiche si un étudiant est sélectionné et qu'il y a au moins une participation)
+// Afficher les statistiques si un étudiant est sélectionné et qu'il y a au moins une participation
 const statsDisponible = computed(() => {
   return selectionEtudiant.value && nombreParticipations.value > 0
 })
@@ -90,17 +90,14 @@ function updateStats() {
   fetch(url)
     .then(response => response.json())
     .then(data => {
-      // Récupérer le tableau des participations (s'il existe)
       const participations = data._embedded?.participes || []
       let sumPoints = 0
       let countEnCours = 0
 
       participations.forEach(item => {
-        // Si le statut est true et qu'il y a des points, on les ajoute
         if (item.statut === true && item.totalPoints) {
           sumPoints += item.totalPoints
         }
-        // Si le statut est null, on compte la fiche comme en cours
         if (item.statut === null) {
           countEnCours++
         }

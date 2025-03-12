@@ -13,11 +13,6 @@
         </select>
       </div>
 
-      <!-- Promotion saisie manuelle -->
-      <div class="form-group">
-        <label>Promotion <span class="required">*</span></label>
-        <input type="text" v-model="promotion" placeholder="ex: FIE3" required />
-      </div>
 
       <!-- Sélection du semestre -->
       <div class="form-group">
@@ -96,7 +91,6 @@ const actions = ref([])
 
 // Variables pour les valeurs du formulaire
 const selectionEtudiant = ref('')
-const promotion = ref('')
 const selectionSemestre = ref('')
 const selectionReferentiel = ref('')
 const selectionAction = ref('')
