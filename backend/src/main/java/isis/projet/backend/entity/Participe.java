@@ -1,7 +1,7 @@
 package isis.projet.backend.entity;
 
-import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.Date;
 
-
 /**
- * Entité "participe" gérant la relation ternaire entre Etudiant, Action et Semestre.
+ * Entité "participe" gérant la relation ternaire
+ * entre Etudiant, Action et Semestre.
  */
 @Entity
 @Table(name = "participe")
@@ -25,7 +25,7 @@ public class Participe {
 
     /**
      * Relation vers Etudiant.
-     * Ce côté est le "back" de la relation etudiant-participations.
+     * Côté "back" pour etudiant-participations.
      */
     @MapsId("idEtudiant")
     @ManyToOne
@@ -35,7 +35,7 @@ public class Participe {
 
     /**
      * Relation vers Action.
-     * Ce côté est le "back" de la relation action-participations.
+     * Côté "back" pour action-participations.
      */
     @MapsId("idAction")
     @ManyToOne
@@ -45,7 +45,7 @@ public class Participe {
 
     /**
      * Relation vers Semestre.
-     * Ce côté est le "back" de la relation semestre-participations.
+     * Côté "back" pour semestre-participations.
      */
     @MapsId("idSemestre")
     @ManyToOne
@@ -65,11 +65,10 @@ public class Participe {
     @Column(name = "dateFinParticipation")
     private Date dateFinParticipation;
 
-    @Column(name = "descriptionParticipation")
     @Lob
+    @Column(name = "descriptionParticipation")
     private String descriptionParticipation;
 
     @Column(name = "statut")
-    private Boolean  statut;
-
+    private Boolean statut;
 }

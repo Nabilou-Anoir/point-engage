@@ -1,12 +1,12 @@
 package isis.projet.backend.entity;
 
-import jakarta.persistence.*;
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * Entité représentant un référentiel.
@@ -27,13 +27,14 @@ public class Referentiel {
     @Column(name = "nom")
     private String nom;
 
-    @Column(name = "description")
     @Lob
+    @Column(name = "description")
     private String description;
 
     /**
      * Relation bidirectionnelle :
      * Un référentiel peut avoir plusieurs actions.
+     * Côté "managed" pour referentiel-actions.
      */
     @OneToMany(mappedBy = "referentiel", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "referentiel-actions")

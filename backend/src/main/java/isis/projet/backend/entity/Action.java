@@ -1,16 +1,14 @@
 package isis.projet.backend.entity;
 
-import jakarta.persistence.*;
-
-import java.util.Date;
-import java.util.List;
-
-
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * Entité représentant une action.
@@ -31,7 +29,7 @@ public class Action {
     private Integer idAction;
 
     @Column(name = "nom")
-    private String  nom;
+    private String nom;
 
     @Column(name = "dateDebutAction")
     private Date dateDebutAction;
@@ -39,14 +37,13 @@ public class Action {
     @Column(name = "dateFinAction")
     private Date dateFinAction;
 
-
-    @Column(name = "descriptionAction")
     @Lob
+    @Column(name = "descriptionAction")
     private String descriptionAction;
 
     /**
      * Plusieurs actions peuvent être validées par un même référent.
-     * Ce côté est le "back" de la relation référent-actions.
+     * Relation "back" vis-à-vis du référent.
      */
     @ManyToOne
     @JoinColumn(name = "id_referent")
@@ -55,7 +52,7 @@ public class Action {
 
     /**
      * Plusieurs actions peuvent appartenir à un même référentiel.
-     * Ce côté est le "back" de la relation référentiel-actions.
+     * Relation "back" vis-à-vis du référentiel.
      */
     @ManyToOne
     @JoinColumn(name = "id_referentiel")
@@ -64,7 +61,7 @@ public class Action {
 
     /**
      * Une action peut avoir plusieurs participations.
-     * Ce côté est le "managed" pour la relation action-participations.
+     * Relation "managed" côté action.
      */
     @OneToMany(mappedBy = "action", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "action-participations")

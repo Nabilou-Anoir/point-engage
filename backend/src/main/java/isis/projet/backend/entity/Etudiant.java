@@ -1,13 +1,12 @@
 package isis.projet.backend.entity;
 
-import jakarta.persistence.*;
-import java.util.List;
-
-
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * Entité représentant un étudiant.
@@ -31,7 +30,7 @@ public class Etudiant {
     @Column(name = "prenom")
     private String prenom;
 
-    @Column(name = "email",nullable = true)
+    @Column(name = "email", nullable = true)
     private String email;
 
     @Column(name = "promotion")
@@ -39,7 +38,7 @@ public class Etudiant {
 
     /**
      * Un étudiant peut avoir plusieurs participations.
-     * Ce côté est le "managed" pour la relation etudiant-participations.
+     * Relation "managed" côté étudiant.
      */
     @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "etudiant-participations")

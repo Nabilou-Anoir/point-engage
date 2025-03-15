@@ -104,18 +104,18 @@ public class ParticipeService {
     }
 
     public List<Participe> getParticipationsByAction(Integer idAction) {
-        return participeRepository.findById_IdAction(idAction);
+        return participeRepository.findByIdIdAction(idAction);
     }
     public List<Participe> getParticipationsByEtudiant(Integer idEtudiant) {
-        return participeRepository.findById_IdEtudiant(idEtudiant);
+        return participeRepository.findByIdIdEtudiant(idEtudiant);
     }
     public List<Participe> getParticipationsByEtudiantAndAction(Integer idEtudiant, Integer idAction) {
-        return participeRepository.findById_IdEtudiantAndId_IdAction(idEtudiant, idAction);
+        return participeRepository.findByIdIdEtudiantAndId_IdAction(idEtudiant, idAction);
     }
     public List<Participe> getEtudiantsByActionAndSemestre(Integer idAction, Integer idSemestre) {
-        return participeRepository.findById_IdActionAndId_IdSemestre(idAction, idSemestre);
+        return participeRepository.findByIdIdActionAndId_IdSemestre(idAction, idSemestre);
     }
     public List<Participe> getParticipationsBySemestre(Integer idSemestre) {
-        return participeRepository.findById_IdSemestre(idSemestre);
+        return participeRepository.findByIdIdSemestre(idSemestre);
     }
 }

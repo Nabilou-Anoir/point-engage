@@ -1,14 +1,13 @@
 package isis.projet.backend.entity;
 
-import jakarta.persistence.*;
-import java.time.LocalDate;
-import java.util.Date;
-import java.util.List;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+import java.util.List;
 
 /**
  * Entité représentant un semestre.
@@ -37,7 +36,7 @@ public class Semestre {
 
     /**
      * Un semestre peut regrouper plusieurs participations.
-     * Ce côté est le "managed" pour la relation semestre-participations.
+     * Côté "managed" pour semestre-participations.
      */
     @OneToMany(mappedBy = "semestre", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "semestre-participations")

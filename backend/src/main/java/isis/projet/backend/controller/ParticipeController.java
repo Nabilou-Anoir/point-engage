@@ -1,127 +1,93 @@
 package isis.projet.backend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import isis.projet.backend.service.ParticipeService;
 import isis.projet.backend.entity.Participe;
 import isis.projet.backend.entity.ParticipeKey;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import jakarta.validation.Valid;
 
-/**
- * Contrôleur pour gérer les participations des étudiants aux actions.
- */
 @RestController
 @RequestMapping("/api/participe")
 @RequiredArgsConstructor
+@Tag(name = "Gestion des Participations", description = "API pour gérer les participations des étudiants aux actions")
 public class ParticipeController {
 
-    // Injection du service
     private final ParticipeService participeService;
 
-    /**
-     * Récupère toutes les participations.
-     *
-     * @return liste des participations.
-     */
+    @Operation(summary = "Récupérer toutes les participations")
     @GetMapping
-    public List<Participe> getAllParticipations() {
-        return participeService.findAll();
+    public ResponseEntity<List<Participe>> getAllParticipations() {
+        return ResponseEntity.ok(participeService.findAll());
     }
 
-    /**
-     * Crée une nouvelle participation.
-     *
-     * @param participe les informations de la participation.
-     * @return la participation créée.
-     */
+    @Operation(summary = "Créer une nouvelle participation")
     @PostMapping
-    public Participe createParticipe(@RequestBody Participe participe) {
-        // Créer la clé composite à partir des identifiants des associations
-        ParticipeKey key = new ParticipeKey();
-        key.setIdEtudiant(participe.getEtudiant().getIdEtudiant());
-        key.setIdAction(participe.getAction().getIdAction());
-        key.setIdSemestre(participe.getSemestre().getIdSemestre());
+    public ResponseEntity<Participe> createParticipe(@Valid @RequestBody Participe participe) {
+        if (participe.getEtudiant() == null || participe.getAction() == null || participe.getSemestre() == null) {
+            return ResponseEntity.badRequest().build();
+        }
 
-        // Affecter la clé composite à l'entité Participe
+        ParticipeKey key = new ParticipeKey(
+                participe.getEtudiant().getIdEtudiant(),
+                participe.getAction().getIdAction(),
+                participe.getSemestre().getIdSemestre()
+        );
         participe.setId(key);
 
-        // Sauvegarder la participation
-        return participeService.save(participe);
+        return ResponseEntity.status(HttpStatus.CREATED).body(participeService.save(participe));
     }
 
-    /**
-     * Récupère une participation par sa clé composite.
-     *
-     * @param idEtudiant l'ID de l'étudiant.
-     * @param idAction l'ID de l'action.
-     * @param idSemestre l'ID du semestre.
-     * @return la participation trouvée ou une erreur 404.
-     */
+    @Operation(summary = "Récupérer une participation par ID")
     @GetMapping("/{idEtudiant}/{idAction}/{idSemestre}")
-    public Participe getParticipationById(@PathVariable Integer idEtudiant,
-                                          @PathVariable Integer idAction,
-                                          @PathVariable Integer idSemestre) {
+    public ResponseEntity<Participe> getParticipationById(
+            @PathVariable Integer idEtudiant,
+            @PathVariable Integer idAction,
+            @PathVariable Integer idSemestre) {
+
         ParticipeKey key = new ParticipeKey(idEtudiant, idAction, idSemestre);
-        return participeService.findById(key);
+        return ResponseEntity.ok(participeService.findById(key));
     }
 
-    /**
-     * Met à jour une participation existante.
-     *
-     * @param idEtudiant l'ID de l'étudiant.
-     * @param idAction l'ID de l'action.
-     * @param idSemestre l'ID du semestre.
-     * @param updated les nouvelles valeurs.
-     * @return la participation mise à jour.
-     */
+    @Operation(summary = "Mettre à jour une participation")
     @PutMapping("/{idEtudiant}/{idAction}/{idSemestre}")
-    public Participe updateParticipation(@PathVariable Integer idEtudiant,
-                                         @PathVariable Integer idAction,
-                                         @PathVariable Integer idSemestre,
-                                         @Valid @RequestBody Participe updated) {
+    public ResponseEntity<Participe> updateParticipation(
+            @PathVariable Integer idEtudiant,
+            @PathVariable Integer idAction,
+            @PathVariable Integer idSemestre,
+            @Valid @RequestBody Participe updated) {
+
         ParticipeKey key = new ParticipeKey(idEtudiant, idAction, idSemestre);
-        return participeService.updateParticipe(key, updated);
+        return ResponseEntity.ok(participeService.updateParticipe(key, updated));
     }
 
-    /**
-     * Supprime une participation par sa clé composite.
-     *
-     * @param idEtudiant l'ID de l'étudiant.
-     * @param idAction l'ID de l'action.
-     * @param idSemestre l'ID du semestre.
-     */
+    @Operation(summary = "Supprimer une participation par ID")
     @DeleteMapping("/{idEtudiant}/{idAction}/{idSemestre}")
-    public void deleteParticipation(@PathVariable Integer idEtudiant,
-                                    @PathVariable Integer idAction,
-                                    @PathVariable Integer idSemestre) {
+    public ResponseEntity<Void> deleteParticipation(
+            @PathVariable Integer idEtudiant,
+            @PathVariable Integer idAction,
+            @PathVariable Integer idSemestre) {
+
         ParticipeKey key = new ParticipeKey(idEtudiant, idAction, idSemestre);
         participeService.deleteById(key);
+        return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Récupérer les participations par action")
     @GetMapping("/action/{idAction}")
-    public List<Participe> getParticipationsByAction(@PathVariable Integer idAction) {
-        return participeService.getParticipationsByAction(idAction);
+    public ResponseEntity<List<Participe>> getParticipationsByAction(@PathVariable Integer idAction) {
+        return ResponseEntity.ok(participeService.getParticipationsByAction(idAction));
     }
+
+    @Operation(summary = "Récupérer les participations par étudiant")
     @GetMapping("/etudiant/{idEtudiant}")
-    public List<Participe> getParticipationsByEtudiant(@PathVariable Integer idEtudiant) {
-        return participeService.getParticipationsByEtudiant(idEtudiant);
-    }
-    @GetMapping("/etudiant/{idEtudiant}/action/{idAction}")
-    public List<Participe> getParticipationsByEtudiantAndAction(@PathVariable Integer idEtudiant,
-                                                                @PathVariable Integer idAction) {
-        return participeService.getParticipationsByEtudiantAndAction(idEtudiant, idAction);
-    }
-    @GetMapping("/action/{idAction}/semestre/{idSemestre}")
-    public List<Participe> getEtudiantsByActionAndSemestre(@PathVariable Integer idAction,
-                                                           @PathVariable Integer idSemestre) {
-        return participeService.getEtudiantsByActionAndSemestre(idAction, idSemestre);
-    }
-    @GetMapping("/semestre/{idSemestre}")
-    public List<Participe> getParticipationsBySemestre(@PathVariable Integer idSemestre) {
-        return participeService.getParticipationsBySemestre(idSemestre);
+    public ResponseEntity<List<Participe>> getParticipationsByEtudiant(@PathVariable Integer idEtudiant) {
+        return ResponseEntity.ok(participeService.getParticipationsByEtudiant(idEtudiant));
     }
 }
