@@ -1,74 +1,70 @@
 package isis.projet.backend.controller;
 
-import isis.projet.backend.dao.ActionRepository;
+import isis.projet.backend.service.ActionService;
 import isis.projet.backend.entity.Action;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Contrôleur pour gérer les actions.
+ * Contrôleur REST pour la gestion des actions.
+ *
+ * Fournit des endpoints pour effectuer des opérations CRUD sur les actions.
  */
 @RestController
 @RequestMapping("/api/actions")
 @RequiredArgsConstructor
 public class ActionController {
 
-    private final ActionRepository actionRepository;
+    // Injection du service pour gérer la logique métier
+    private final ActionService actionService;
 
     /**
      * Récupère toutes les actions.
      *
-     * @return une liste d'actions.
+     * @return une liste de toutes les actions disponibles.
      */
     @GetMapping
     public List<Action> getAllActions() {
-        return actionRepository.findAll();
+        return actionService.findAll();
+    }
+
+    /**
+     * Récupère une action spécifique par son identifiant.
+     *
+     * @param id l'identifiant unique de l'action.
+     * @return l'action trouvée, sinon une exception 404 est levée.
+     */
+    @GetMapping("/{id}")
+    public Action findById(@PathVariable Integer id) {
+        return actionService.findById(id); //
     }
 
     /**
      * Crée une nouvelle action.
      *
-     * @param action l'action à créer (incluant la date).
-     * @return l'action créée.
+     * @param action l'objet Action à enregistrer.
+     * @return l'action enregistrée.
      */
     @PostMapping
     public Action createAction(@RequestBody Action action) {
-        return actionRepository.save(action);
-    }
-
-    /**
-     * Récupère une action par son identifiant.
-     *
-     * @param id l'identifiant de l'action.
-     * @return l'action trouvée ou null si non trouvée.
-     */
-    @GetMapping("/{id}")
-    public Action getActionById(@PathVariable Integer id) {
-        return actionRepository.findById(Long.valueOf(id)).orElse(null);
+        return actionService.save(action);
     }
 
     /**
      * Met à jour une action existante.
      *
-     * @param id      l'identifiant de l'action à mettre à jour.
-     * @param updated l'objet Action contenant les nouvelles valeurs (y compris la date).
-     * @return l'action mise à jour ou null si l'action n'existe pas.
+     * @param id l'identifiant unique de l'action à modifier.
+     * @param updated l'objet contenant les nouvelles valeurs.
+     * @return l'action mise à jour.
      */
     @PutMapping("/{id}")
     public Action updateAction(@PathVariable Integer id, @RequestBody Action updated) {
-        return actionRepository.findById(Long.valueOf(id))
-                .map(a -> {
-                    a.setDescriptionAction(updated.getDescriptionAction());
-                    a.setDateDebutAction(updated.getDateDebutAction());
-                    a.setDateFinAction(updated.getDateFinAction());
-                    a.setReferent(updated.getReferent());
-                    a.setReferentiel(updated.getReferentiel());
-                    a.setNom(updated.getNom());
-                    return actionRepository.save(a);
-                })
-                .orElse(null);
+        return actionService.updateAction(id, updated);
     }
 
     /**
@@ -78,6 +74,6 @@ public class ActionController {
      */
     @DeleteMapping("/{id}")
     public void deleteAction(@PathVariable Integer id) {
-        actionRepository.deleteById(Long.valueOf(id));
+        actionService.deleteById(id);
     }
 }

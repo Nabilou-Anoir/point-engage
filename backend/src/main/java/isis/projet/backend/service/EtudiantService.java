@@ -3,15 +3,16 @@ package isis.projet.backend.service;
 import isis.projet.backend.entity.Etudiant;
 import isis.projet.backend.dao.EtudiantRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Service pour la gestion des entités Etudiant.
  *
- * Fournit les méthodes CRUD pour manipuler les objets Etudiant.
+ * Fournit des méthodes CRUD pour manipuler les objets Etudiant.
  */
 @Service
 @RequiredArgsConstructor
@@ -21,40 +22,63 @@ public class EtudiantService {
     private final EtudiantRepository etudiantRepository;
 
     /**
-     * Récupère tous les Etudiant de la base de données.
+     * Récupère tous les étudiants de la base de données.
      *
-     * @return une liste de tous les objets Etudiant.
+     * @return une liste de tous les étudiants.
      */
     public List<Etudiant> findAll() {
         return etudiantRepository.findAll();
     }
 
     /**
-     * Recherche un Etudiant par son identifiant.
+     * Recherche un étudiant par son identifiant.
      *
-     * @param id l'identifiant de l'Etudiant.
-     * @return un Optional contenant l'Etudiant s'il existe.
+     * @param id l'identifiant de l'étudiant.
+     * @return l'étudiant trouvé ou génère une erreur 404.
      */
-    public Optional<Etudiant> findById(Integer id) {
-        return etudiantRepository.findById(Long.valueOf(id));
+    public Etudiant findById(Integer id) {
+        return etudiantRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Étudiant non trouvé avec id : " + id));
     }
 
     /**
-     * Sauvegarde ou met à jour un Etudiant dans la base de données.
+     * Sauvegarde ou met à jour un étudiant dans la base de données.
      *
      * @param etudiant l'objet Etudiant à sauvegarder.
-     * @return l'Etudiant sauvegardé.
+     * @return l'étudiant sauvegardé.
      */
     public Etudiant save(Etudiant etudiant) {
         return etudiantRepository.save(etudiant);
     }
 
     /**
-     * Supprime un Etudiant de la base de données à partir de son identifiant.
+     * Met à jour un étudiant existant.
      *
-     * @param id l'identifiant de l'Etudiant à supprimer.
+     * @param id l'identifiant de l'étudiant à mettre à jour.
+     * @param updated l'objet contenant les nouvelles valeurs.
+     * @return l'étudiant mis à jour.
+     */
+    public Etudiant updateEtudiant(Integer id, Etudiant updated) {
+        return etudiantRepository.findById(id)
+                .map(etudiant -> {
+                    etudiant.setNom(updated.getNom());
+                    etudiant.setPrenom(updated.getPrenom());
+                    etudiant.setEmail(updated.getEmail());
+                    etudiant.setPromotion(updated.getPromotion());
+                    return etudiantRepository.save(etudiant);
+                })
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Étudiant non trouvé avec id : " + id));
+    }
+
+    /**
+     * Supprime un étudiant de la base de données par son identifiant.
+     *
+     * @param id l'identifiant de l'étudiant à supprimer.
      */
     public void deleteById(Integer id) {
-        etudiantRepository.deleteById(Long.valueOf(id));
+        if (!etudiantRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Étudiant non trouvé avec id : " + id);
+        }
+        etudiantRepository.deleteById(id);
     }
 }

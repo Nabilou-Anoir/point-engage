@@ -179,7 +179,7 @@ function submitParticipation() {
     .then(response => response.json())
     .then(() => {
       alert("Participation créée avec succès !");
-      router.push("/");
+      router.push("/AcceuilEtudiantView");
     })
     .catch(error => {
       console.log(error);

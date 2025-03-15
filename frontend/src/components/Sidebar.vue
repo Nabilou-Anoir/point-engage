@@ -30,6 +30,7 @@
   display: flex;
   flex-direction: column;
   padding: 20px;
+  min-height: 100vh;
 }
 
 /* Zone utilisateur */

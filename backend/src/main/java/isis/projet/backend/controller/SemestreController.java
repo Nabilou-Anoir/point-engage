@@ -1,11 +1,14 @@
 package isis.projet.backend.controller;
 
-import isis.projet.backend.dao.SemestreRepository;
+import isis.projet.backend.service.SemestreService;
 import isis.projet.backend.entity.Semestre;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 /**
  * Contrôleur pour gérer les semestres.
@@ -15,37 +18,60 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SemestreController {
 
-    private final SemestreRepository semestreRepository;
+    // Injection du service au lieu du repository
+    private final SemestreService semestreService;
 
+    /**
+     * Récupère tous les semestres.
+     *
+     * @return liste des semestres.
+     */
     @GetMapping
     public List<Semestre> getAllSemestres() {
-        return semestreRepository.findAll();
+        return semestreService.findAll();
     }
 
+    /**
+     * Crée un nouveau semestre.
+     *
+     * @param semestre les informations du semestre.
+     * @return le semestre créé.
+     */
     @PostMapping
-    public Semestre createSemestre(@RequestBody Semestre semestre) {
-        return semestreRepository.save(semestre);
+    public Semestre createSemestre(@Valid @RequestBody Semestre semestre) {
+        return semestreService.save(semestre);
     }
 
+    /**
+     * Récupère un semestre par son identifiant.
+     *
+     * @param id l'identifiant du semestre.
+     * @return le semestre trouvé ou une erreur 404.
+     */
     @GetMapping("/{id}")
     public Semestre getSemestreById(@PathVariable Integer id) {
-        return semestreRepository.findById(id).orElse(null);
+        return semestreService.findById(id);
     }
 
+    /**
+     * Met à jour un semestre existant.
+     *
+     * @param id l'identifiant du semestre à mettre à jour.
+     * @param updated les nouvelles valeurs.
+     * @return le semestre mis à jour.
+     */
     @PutMapping("/{id}")
-    public Semestre updateSemestre(@PathVariable Integer id, @RequestBody Semestre updated) {
-        return semestreRepository.findById(id)
-                .map(s -> {
-                    s.setDateDebutSemestre(updated.getDateDebutSemestre());
-                    s.setDateFinSemestre(updated.getDateFinSemestre());
-                    s.setNbSemestre(updated.getNbSemestre());
-                    return semestreRepository.save(s);
-                })
-                .orElse(null);
+    public Semestre updateSemestre(@PathVariable Integer id, @Valid @RequestBody Semestre updated) {
+        return semestreService.updateSemestre(id, updated);
     }
 
+    /**
+     * Supprime un semestre par son identifiant.
+     *
+     * @param id l'identifiant du semestre à supprimer.
+     */
     @DeleteMapping("/{id}")
     public void deleteSemestre(@PathVariable Integer id) {
-        semestreRepository.deleteById(id);
+        semestreService.deleteById(id);
     }
 }

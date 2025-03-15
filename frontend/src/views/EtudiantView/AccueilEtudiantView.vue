@@ -1,10 +1,9 @@
-<!-- src/views/EtudiantView/AccueilEtudiantView.vue -->
 <template>
   <div class="accueil-container">
-    <h2>Accueil Étudiant</h2>
+    <h2>Votre Accueil</h2>
 
-    <!-- Sélection de l'étudiant -->
-    <div class="form-group">
+    <!-- Sélection de l'étudiant (affiché uniquement si aucun étudiant n'est sélectionné) -->
+    <div v-if="!selectionEtudiant" class="form-group">
       <label>Étudiant <span class="required">*</span></label>
       <select v-model="selectionEtudiant" @change="updateStats">
         <option disabled value="">-- Sélectionnez un étudiant --</option>
@@ -48,15 +47,19 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
+
+// Données réactives
 const etudiants = ref([])
-const selectionEtudiant = ref('')
+const selectionEtudiant = ref(sessionStorage.getItem('selectedEtudiant') || '')
 const totalPointsValides = ref(0)
 const nombreParticipations = ref(0)
 const nbFichesEnCours = ref(0)
 const nomEtudiantSelectionne = ref('')
 
-// Afficher les statistiques si un étudiant est sélectionné et qu'il y a au moins une participation
+// Affichage conditionnel des statistiques
 const statsDisponible = computed(() => {
   return selectionEtudiant.value && nombreParticipations.value > 0
 })
@@ -65,29 +68,29 @@ const statsDisponible = computed(() => {
 const ETUDIANTS_URL = 'http://localhost:8989/api/etudiants'
 const PARTICIPES_SEARCH_URL = 'http://localhost:8989/api/participes/search/findByIdIdEtudiant'
 
-// Fonction pour charger la liste des étudiants
+// Charger les étudiants
 function getEtudiants() {
   fetch(ETUDIANTS_URL)
     .then(response => response.json())
     .then(data => {
       etudiants.value = data
+      if (selectionEtudiant.value) {
+        updateStats() // Charger immédiatement les stats si un étudiant est déjà sélectionné
+      }
     })
-    .catch(error =>
-      console.error("Erreur lors du chargement des étudiants :", error)
-    )
+    .catch(error => console.error("Erreur lors du chargement des étudiants :", error))
 }
 
-// Fonction pour mettre à jour les statistiques pour l'étudiant sélectionné
+// Mettre à jour les statistiques de l'étudiant sélectionné
 function updateStats() {
-  const id = selectionEtudiant.value
-  // Récupérer l'objet étudiant sélectionné pour afficher son prénom
-  const etu = etudiants.value.find(e => e.idEtudiant == id)
+  if (!selectionEtudiant.value) return
+
+  sessionStorage.setItem('selectedEtudiant', selectionEtudiant.value) // Enregistrer la sélection
+
+  const etu = etudiants.value.find(e => e.idEtudiant == selectionEtudiant.value)
   nomEtudiantSelectionne.value = etu ? etu.prenom : ''
 
-  // Construire l'URL pour récupérer les participations de l'étudiant
-  const url = `${PARTICIPES_SEARCH_URL}?idEtudiant=${id}`
-
-  fetch(url)
+  fetch(`${PARTICIPES_SEARCH_URL}?idEtudiant=${selectionEtudiant.value}`)
     .then(response => response.json())
     .then(data => {
       const participations = data._embedded?.participes || []
@@ -107,14 +110,10 @@ function updateStats() {
       nombreParticipations.value = participations.length
       nbFichesEnCours.value = countEnCours
     })
-    .catch(error =>
-      console.error("Erreur lors du chargement des participations :", error)
-    )
+    .catch(error => console.error("Erreur lors du chargement des participations :", error))
 }
 
-onMounted(() => {
-  getEtudiants()
-})
+onMounted(getEtudiants)
 </script>
 
 <style scoped>

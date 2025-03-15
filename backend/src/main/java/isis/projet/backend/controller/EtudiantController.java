@@ -1,11 +1,14 @@
 package isis.projet.backend.controller;
 
-import isis.projet.backend.dao.EtudiantRepository;
+import isis.projet.backend.service.EtudiantService;
 import isis.projet.backend.entity.Etudiant;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import jakarta.validation.Valid;
 
 /**
  * Contrôleur pour gérer les étudiants.
@@ -15,38 +18,60 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EtudiantController {
 
-    private final EtudiantRepository etudiantRepository;
+    // Injection du service et non du repository
+    private final EtudiantService etudiantService;
 
+    /**
+     * Récupère tous les étudiants.
+     *
+     * @return liste des étudiants.
+     */
     @GetMapping
     public List<Etudiant> getAllEtudiants() {
-        return etudiantRepository.findAll();
+        return etudiantService.findAll();
     }
 
+    /**
+     * Crée un nouvel étudiant.
+     *
+     * @param etudiant les informations de l'étudiant.
+     * @return l'étudiant créé.
+     */
     @PostMapping
-    public Etudiant createEtudiant(@RequestBody Etudiant etudiant) {
-        return etudiantRepository.save(etudiant);
+    public Etudiant createEtudiant(@Valid @RequestBody Etudiant etudiant) {
+        return etudiantService.save(etudiant);
     }
 
+    /**
+     * Récupère un étudiant par son identifiant.
+     *
+     * @param id l'identifiant de l'étudiant.
+     * @return l'étudiant trouvé ou une erreur 404.
+     */
     @GetMapping("/{id}")
-    public Etudiant getEtudiantById(@PathVariable Long id) {
-        return etudiantRepository.findById(id).orElse(null);
+    public Etudiant getEtudiantById(@PathVariable Integer id) {
+        return etudiantService.findById(id);
     }
 
+    /**
+     * Met à jour un étudiant existant.
+     *
+     * @param id l'identifiant de l'étudiant à mettre à jour.
+     * @param updated les nouvelles valeurs.
+     * @return l'étudiant mis à jour.
+     */
     @PutMapping("/{id}")
-    public Etudiant updateEtudiant(@PathVariable Long id, @RequestBody Etudiant updated) {
-        return etudiantRepository.findById(id)
-                .map(e -> {
-                    e.setNom(updated.getNom());
-                    e.setPrenom(updated.getPrenom());
-                    e.setEmail(updated.getEmail());
-                    e.setPromotion(updated.getPromotion());
-                    return etudiantRepository.save(e);
-                })
-                .orElse(null);
+    public Etudiant updateEtudiant(@PathVariable Integer id, @Valid @RequestBody Etudiant updated) {
+        return etudiantService.updateEtudiant(id, updated);
     }
 
+    /**
+     * Supprime un étudiant par son identifiant.
+     *
+     * @param id l'identifiant de l'étudiant à supprimer.
+     */
     @DeleteMapping("/{id}")
-    public void deleteEtudiant(@PathVariable Long id) {
-        etudiantRepository.deleteById(id);
+    public void deleteEtudiant(@PathVariable Integer id) {
+        etudiantService.deleteById(id);
     }
 }
