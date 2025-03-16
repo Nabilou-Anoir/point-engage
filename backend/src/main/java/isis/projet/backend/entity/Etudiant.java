@@ -30,15 +30,16 @@ public class Etudiant {
     @Column(name = "prenom")
     private String prenom;
 
-    @Column(name = "email", nullable = true)
+    @Column(name = "email",nullable = true)
     private String email;
 
     @Column(name = "promotion")
     private String promotion;
 
+
     /**
      * Un étudiant peut avoir plusieurs participations.
-     * Relation "managed" côté étudiant.
+     * Ce côté est le "managed" pour la relation etudiant-participations.
      */
     @OneToMany(mappedBy = "etudiant", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "etudiant-participations")

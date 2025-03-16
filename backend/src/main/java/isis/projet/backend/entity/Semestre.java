@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.util.Date;
 import java.util.List;
 
+
 /**
  * Entité représentant un semestre.
  * Un semestre peut regrouper plusieurs participations.
@@ -36,7 +37,7 @@ public class Semestre {
 
     /**
      * Un semestre peut regrouper plusieurs participations.
-     * Côté "managed" pour semestre-participations.
+     * Ce côté est le "managed" pour la relation semestre-participations.
      */
     @OneToMany(mappedBy = "semestre", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "semestre-participations")

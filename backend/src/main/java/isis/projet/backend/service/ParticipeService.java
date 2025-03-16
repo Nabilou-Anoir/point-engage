@@ -2,7 +2,13 @@ package isis.projet.backend.service;
 
 import isis.projet.backend.entity.Participe;
 import isis.projet.backend.entity.ParticipeKey;
+import isis.projet.backend.entity.Etudiant;
+import isis.projet.backend.entity.Action;
+import isis.projet.backend.entity.Semestre;
 import isis.projet.backend.dao.ParticipeRepository;
+import isis.projet.backend.dao.EtudiantRepository;
+import isis.projet.backend.dao.ActionRepository;
+import isis.projet.backend.dao.SemestreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,59 +18,54 @@ import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * Service pour la gestion des entités Participe.
- *
- * Cette classe gère les opérations CRUD sur la table d'association "participe",
- * qui utilise une clé composite (id_Etudiant, id_Action, id_Semestre).
- * Elle intègre également une contrainte métier pour vérifier que la valeur de totalPoints ne dépasse pas 0,50.
- */
 @Service
 @RequiredArgsConstructor
 public class ParticipeService {
 
     private final ParticipeRepository participeRepository;
+    private final EtudiantRepository etudiantRepository;
+    private final ActionRepository actionRepository;
+    private final SemestreRepository semestreRepository;
 
-    /**
-     * Récupère toutes les participations de la base de données.
-     *
-     * @return une liste de toutes les participations.
-     */
     public List<Participe> findAll() {
         return participeRepository.findAll();
     }
 
-    /**
-     * Recherche une participation par sa clé composite.
-     *
-     * @param key la clé composite (contenant id_Etudiant, id_Action, id_Semestre).
-     * @return la participation si elle existe, sinon lève une exception 404.
-     */
     public Participe findById(ParticipeKey key) {
         return participeRepository.findById(key)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Participation non trouvée pour la clé fournie"));
     }
 
     /**
-     * Sauvegarde ou met à jour une participation dans la base de données.
-     * Avant de persister, vérifie que la valeur de totalPoints ne dépasse pas 0,50.
-     *
-     * @param participe l'objet Participe à sauvegarder.
-     * @return la participation sauvegardée.
-     * @throws IllegalArgumentException si totalPoints dépasse 0,50.
+     * Avant de sauvegarder, nous récupérons les entités existantes afin que JPA
+     * gère correctement les associations.
      */
     public Participe save(Participe participe) {
+        // Récupération des entités associées
+        Integer idEtudiant = participe.getEtudiant().getIdEtudiant();
+        Integer idAction = participe.getAction().getIdAction();
+        Integer idSemestre = participe.getSemestre().getIdSemestre();
+
+        Etudiant etudiant = etudiantRepository.findById(idEtudiant)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Étudiant non trouvé avec id : " + idEtudiant));
+        Action action = actionRepository.findById(idAction)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Action non trouvée avec id : " + idAction));
+        Semestre semestre = semestreRepository.findById(idSemestre)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Semestre non trouvé avec id : " + idSemestre));
+
+        // Affectation des entités gérées
+        participe.setEtudiant(etudiant);
+        participe.setAction(action);
+        participe.setSemestre(semestre);
+
+        // Mise à jour de la clé composite
+        ParticipeKey key = new ParticipeKey(idEtudiant, idAction, idSemestre);
+        participe.setId(key);
+
         validateTotalPoints(participe);
         return participeRepository.save(participe);
     }
 
-    /**
-     * Met à jour une participation existante.
-     *
-     * @param key la clé composite de la participation.
-     * @param updated l'objet contenant les nouvelles valeurs.
-     * @return la participation mise à jour.
-     */
     public Participe updateParticipe(ParticipeKey key, Participe updated) {
         Participe participe = findById(key);
         participe.setTotalPoints(updated.getTotalPoints());
@@ -77,11 +78,6 @@ public class ParticipeService {
         return participeRepository.save(participe);
     }
 
-    /**
-     * Supprime une participation de la base de données à partir de sa clé composite.
-     *
-     * @param key la clé composite de la participation.
-     */
     @Transactional
     public void deleteById(ParticipeKey key) {
         if (!participeRepository.existsById(key)) {
@@ -90,12 +86,6 @@ public class ParticipeService {
         participeRepository.deleteById(key);
     }
 
-    /**
-     * Vérifie que la valeur de totalPoints ne dépasse pas 0,50.
-     *
-     * @param participe la participation à valider.
-     * @throws IllegalArgumentException si totalPoints est supérieur à 0,50.
-     */
     private void validateTotalPoints(Participe participe) {
         if (participe.getTotalPoints() != null &&
                 participe.getTotalPoints().compareTo(new BigDecimal("0.50")) > 0) {

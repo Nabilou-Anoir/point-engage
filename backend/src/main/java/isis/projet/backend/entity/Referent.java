@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-
 /**
  * Entité représentant un référent.
  * Un référent peut valider plusieurs actions.
@@ -36,7 +35,7 @@ public class Referent {
     /**
      * Relation bidirectionnelle :
      * Un référent peut valider plusieurs actions.
-     * Côté "managed" pour référent-actions.
+     * Ce côté est le "managed" et sera sérialisé.
      */
     @OneToMany(mappedBy = "referent", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "referent-actions")

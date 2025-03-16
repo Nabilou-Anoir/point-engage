@@ -27,14 +27,13 @@ public class Referentiel {
     @Column(name = "nom")
     private String nom;
 
-    @Lob
     @Column(name = "description")
+    @Lob
     private String description;
 
     /**
      * Relation bidirectionnelle :
      * Un référentiel peut avoir plusieurs actions.
-     * Côté "managed" pour referentiel-actions.
      */
     @OneToMany(mappedBy = "referentiel", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "referentiel-actions")

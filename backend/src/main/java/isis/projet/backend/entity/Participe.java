@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.Date;
 
+
 /**
- * Entité "participe" gérant la relation ternaire
- * entre Etudiant, Action et Semestre.
+ * Entité "participe" gérant la relation ternaire entre Etudiant, Action et Semestre.
  */
 @Entity
 @Table(name = "participe")
@@ -25,7 +25,7 @@ public class Participe {
 
     /**
      * Relation vers Etudiant.
-     * Côté "back" pour etudiant-participations.
+     * Ce côté est le "back" de la relation etudiant-participations.
      */
     @MapsId("idEtudiant")
     @ManyToOne
@@ -35,7 +35,7 @@ public class Participe {
 
     /**
      * Relation vers Action.
-     * Côté "back" pour action-participations.
+     * Ce côté est le "back" de la relation action-participations.
      */
     @MapsId("idAction")
     @ManyToOne
@@ -45,7 +45,7 @@ public class Participe {
 
     /**
      * Relation vers Semestre.
-     * Côté "back" pour semestre-participations.
+     * Ce côté est le "back" de la relation semestre-participations.
      */
     @MapsId("idSemestre")
     @ManyToOne
@@ -65,10 +65,11 @@ public class Participe {
     @Column(name = "dateFinParticipation")
     private Date dateFinParticipation;
 
-    @Lob
     @Column(name = "descriptionParticipation")
+    @Lob
     private String descriptionParticipation;
 
     @Column(name = "statut")
-    private Boolean statut;
+    private Boolean  statut;
+
 }

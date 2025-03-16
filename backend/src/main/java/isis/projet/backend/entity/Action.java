@@ -29,7 +29,7 @@ public class Action {
     private Integer idAction;
 
     @Column(name = "nom")
-    private String nom;
+    private String  nom;
 
     @Column(name = "dateDebutAction")
     private Date dateDebutAction;
@@ -37,13 +37,14 @@ public class Action {
     @Column(name = "dateFinAction")
     private Date dateFinAction;
 
-    @Lob
+
     @Column(name = "descriptionAction")
+    @Lob
     private String descriptionAction;
 
     /**
      * Plusieurs actions peuvent être validées par un même référent.
-     * Relation "back" vis-à-vis du référent.
+     * Ce côté est le "back" de la relation référent-actions.
      */
     @ManyToOne
     @JoinColumn(name = "id_referent")
@@ -52,7 +53,7 @@ public class Action {
 
     /**
      * Plusieurs actions peuvent appartenir à un même référentiel.
-     * Relation "back" vis-à-vis du référentiel.
+     * Ce côté est le "back" de la relation référentiel-actions.
      */
     @ManyToOne
     @JoinColumn(name = "id_referentiel")
@@ -61,7 +62,7 @@ public class Action {
 
     /**
      * Une action peut avoir plusieurs participations.
-     * Relation "managed" côté action.
+     * Ce côté est le "managed" pour la relation action-participations.
      */
     @OneToMany(mappedBy = "action", cascade = CascadeType.ALL)
     @JsonManagedReference(value = "action-participations")

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+
 /**
  * Clé composite pour la table de liaison "participe".
  * (id_etudiant, id_action, id_semestre) forment la clé primaire.
