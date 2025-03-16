@@ -1,285 +1,158 @@
 <template>
-  <div class="fiche-form-container">
-    <h2>Fiche descriptive Ingénieur Engagé</h2>
-    <form @submit.prevent="submitParticipation" class="fiche-form">
-      <!-- Sélection de l'étudiant -->
-      <div class="form-group">
-        <label>Étudiant <span class="required">*</span></label>
-        <select v-model="selectionEtudiant" required>
-          <option disabled value="">-- Sélectionnez votre nom et prénom --</option>
-          <option v-for="et in etudiants" :key="et.idEtudiant" :value="et.idEtudiant">
-            {{ et.nom }} {{ et.prenom }}
-          </option>
-        </select>
-      </div>
+  <div class="historique-container">
+    <h1>Historique des fiches</h1>
 
-      <!-- Sélection du semestre -->
-      <div class="form-group">
-        <label>Semestre <span class="required">*</span></label>
-        <select v-model="selectionSemestre" required>
-          <option disabled value="">-- Sélectionnez un semestre --</option>
-          <option v-for="sem in semestres" :key="sem.idSemestre" :value="sem.idSemestre">
-            S{{ sem.nbSemestre }}
-          </option>
-        </select>
-      </div>
+    <!-- Affichage du nom de l'étudiant sélectionné -->
+    <p v-if="selectionEtudiantNom"><strong>Étudiant sélectionné :</strong> {{ selectionEtudiantNom }}</p>
 
-      <!-- Sélection du référentiel -->
-      <div class="form-group">
-        <label>Référentiel <span class="required">*</span></label>
-        <select v-model="selectionReferentiel" required>
-          <option disabled value="">-- Sélectionnez un référentiel --</option>
-          <option v-for="ref in referentiels" :key="ref.idReferentiel" :value="ref.idReferentiel">
-            {{ ref.nom }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Sélection de l'action existante -->
-      <div class="form-group">
-        <label>Action <span class="required">*</span></label>
-        <select v-model="selectionAction" required>
-          <option disabled value="">-- Sélectionnez une action --</option>
-          <option v-for="act in actions" :key="act.idAction" :value="act.idAction">
-            {{ act.nom }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Dates de participation -->
-      <div class="form-group">
-        <label>Date de début de participation <span class="required">*</span></label>
-        <input type="date" v-model="dateDebutParticipation" required />
-      </div>
-      <div class="form-group">
-        <label>Date de fin de participation <span class="required">*</span></label>
-        <input type="date" v-model="dateFinParticipation" required />
-      </div>
-
-      <!-- Description de la participation -->
-      <div class="form-group">
-        <label>Description de la participation <span class="required">*</span></label>
-        <textarea rows="4" v-model="descriptionParticipation" placeholder="Décrivez votre participation..." required></textarea>
-      </div>
-
-      <div class="btn-group">
-        <button type="submit" class="btn-submit">Envoyer</button>
-        <button type="button" class="btn-cancel" @click="handleCancel">Annuler</button>
-      </div>
-    </form>
+    <!-- Tableau d'historique -->
+    <div v-if="historique.length">
+      <table class="table-historique">
+        <thead>
+        <tr>
+          <th>Activités</th>
+          <th>Date de Réalisation</th>
+          <th>Statut</th>
+          <th>Points</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="item in historique" :key="`${item.id.idEtudiant}-${item.id.idAction}-${item.id.idSemestre}`">
+          <td>{{ item.action ? item.action.nom : 'N/A' }}</td>
+          <td>{{ formatDate(item.dateDebutParticipation) }}</td>
+          <td>
+            <span v-if="item.statut === true" class="statut valide">Validé</span>
+            <span v-else-if="item.statut === false" class="statut refuse">Refusé</span>
+            <span v-else class="statut attente">En attente de validation</span>
+          </td>
+          <td>{{ item.totalPoints || 0 }} points attribués</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div v-else>
+      <p>Aucun historique disponible.</p>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 
-// Importation des classes depuis le dossier 'classe'
-import { Etudiant } from '../../classe/Etudiant.js'
-import { Semestre } from '../../classe/Semestre.js'
-import { Referentiel } from '../../classe/Referentiel.js'
-import { Action } from '../../classe/Action.js'
+// États réactifs
+const historique = ref([])
 
-const router = useRouter()
-
-// Variables réactives pour stocker les listes
-const etudiants = ref([])
-const semestres = ref([])
-const referentiels = ref([])
-const actions = ref([])
-
-// Variables pour les valeurs du formulaire
-const selectionEtudiant = ref('')
-const selectionSemestre = ref('')
-const selectionReferentiel = ref('')
-const selectionAction = ref('')
-const dateDebutParticipation = ref('')
-const dateFinParticipation = ref('')
-const descriptionParticipation = ref('')
+// Récupération des données de session
+const selectionEtudiant = ref(sessionStorage.getItem('selectedEtudiant') || '')
+const selectionEtudiantNom = ref(sessionStorage.getItem('selectedEtudiantNom') || '')
 
 // Endpoints API
-const ETUDIANTS_URL    = 'http://localhost:8989/api/etudiants'
-const SEMESTRES_URL    = 'http://localhost:8989/api/semestres'
-const REFERENTIELS_URL = 'http://localhost:8989/api/referentiels'
-const ACTIONS_URL      = 'http://localhost:8989/api/actions'
-const PARTICIPES_URL   = 'http://localhost:8989/api/participes'
+const PARTICIPES_SEARCH_URL = 'http://localhost:8989/api/participes/search/findByIdIdEtudiant'
+const ACTIONS_URL = 'http://localhost:8989/api/actions'
+const SEMESTRES_URL = 'http://localhost:8989/api/semestres'
 
-// Chargement des données
-function getEtudiants() {
-  fetch(ETUDIANTS_URL)
-    .then(response => response.json())
-    .then(dataJSON => {
-      etudiants.value = dataJSON.map(item =>
-        new Etudiant(item.idEtudiant, item.nom, item.prenom, item.email, item.promotion)
-      )
-    })
-    .catch(error => console.log(error))
-}
+// Charger automatiquement l'historique de l’étudiant sélectionné
+function getHistorique() {
+  if (!selectionEtudiant.value) return
 
-function getSemestres() {
-  fetch(SEMESTRES_URL)
-    .then(response => response.json())
-    .then(dataJSON => {
-      semestres.value = dataJSON.map(item =>
-        new Semestre(item.idSemestre, item.nbSemestre, item.dateDebutSemestre, item.dateFinSemestre)
-      )
-    })
-    .catch(error => console.log(error))
-}
-
-function getReferentiels() {
-  fetch(REFERENTIELS_URL)
-    .then(response => response.json())
-    .then(dataJSON => {
-      referentiels.value = dataJSON.map(item =>
-        new Referentiel(item.idReferentiel, item.nom, item.description)
-      )
-    })
-    .catch(error => console.log(error))
-}
-
-function getActions() {
-  fetch(ACTIONS_URL)
-    .then(response => response.json())
-    .then(dataJSON => {
-      actions.value = dataJSON.map(item =>
-        new Action(item.idAction, item.nom, item.descriptionAction, item.dateDebutAction, item.dateFinAction)
-      )
-    })
-    .catch(error => console.log(error))
-}
-
-onMounted(() => {
-  getEtudiants()
-  getSemestres()
-  getReferentiels()
-  getActions()
-})
-
-// Fonction de soumission du formulaire
-function submitParticipation() {
-  // Construction du payload conforme, incluant le champ "id"
-  const participationPayload = {
-    id: {
-      idEtudiant: Number(selectionEtudiant.value),
-      idAction: Number(selectionAction.value),
-      idSemestre: Number(selectionSemestre.value)
-    },
-    etudiant: { idEtudiant: Number(selectionEtudiant.value) },
-    action: { idAction: Number(selectionAction.value) },
-    semestre: { idSemestre: Number(selectionSemestre.value) },
-    totalPoints: 0,
-    nbParticipation: 0,
-    dateDebutParticipation: dateDebutParticipation.value,
-    dateFinParticipation: dateFinParticipation.value,
-    descriptionParticipation: descriptionParticipation.value,
-    statut: true
-  }
-
-  fetch(PARTICIPES_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(participationPayload)
-  })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error("Erreur lors de la création de la participation");
-      }
-      return response.json();
-    })
+  const url = `${PARTICIPES_SEARCH_URL}?idEtudiant=${selectionEtudiant.value}`
+  fetch(url)
+    .then(res => res.json())
     .then(data => {
-      console.log("Participation créée :", data);
-      alert("Participation créée avec succès !");
-      router.push("/AcceuilEtudiantView");
+      const participations = data._embedded?.participes || []
+
+      const fetchDetails = participations.map(item => {
+        const actionUrl = `${ACTIONS_URL}/${item.id.idAction}`
+        const semestreUrl = `${SEMESTRES_URL}/${item.id.idSemestre}`
+
+        return fetch(actionUrl)
+          .then(r => r.json())
+          .then(actionData => {
+            item.action = actionData
+            return fetch(semestreUrl)
+          })
+          .then(r => r.json())
+          .then(semestreData => {
+            item.semestre = semestreData
+            return item
+          })
+          .catch(err => {
+            console.error('Erreur lors du chargement des détails:', err)
+            return item
+          })
+      })
+
+      return Promise.all(fetchDetails)
     })
-    .catch(error => {
-      console.error("Erreur lors de la création de la participation :", error);
-      alert("Une erreur est survenue lors de l’envoi de la fiche.");
+    .then(results => {
+      if (results) {
+        historique.value = results
+      }
+    })
+    .catch(err => {
+      console.error('Erreur lors du chargement de l\'historique :', err)
     })
 }
 
-function handleCancel() {
-  router.push('/')
+// Fonction pour formater la date
+function formatDate(dateStr) {
+  if (!dateStr) return 'N/A'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('fr-FR')
 }
+
+onMounted(getHistorique) // Charge l'historique au montage
 </script>
 
 <style scoped>
-.fiche-form-container {
-  max-width: 700px;
-  margin: 40px auto;
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
+.historique-container {
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-.fiche-form-container h2 {
-  color: #6C3EA9;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #6C3EA9;
-  padding-bottom: 0.5rem;
-}
-
-.fiche-form {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.4rem;
+p {
   font-weight: bold;
-  color: #333;
+  margin-bottom: 15px;
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
+/* Table */
+.table-historique {
   width: 100%;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-  font: inherit;
-}
-
-.required {
-  color: red;
-}
-
-.btn-group {
-  display: flex;
-  gap: 1rem;
+  border-collapse: collapse;
   margin-top: 1rem;
+  background-color: #fff;
 }
 
-.btn-submit {
-  padding: 10px 20px;
-  background-color: #d32f2f;
-  color: #fff;
-  border: none;
+.table-historique th,
+.table-historique td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.table-historique th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+/* Statuts colorés */
+.statut {
+  padding: 4px 8px;
   border-radius: 4px;
-  cursor: pointer;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
-.btn-submit:hover {
-  background-color: #c12727;
+.statut.valide {
+  background-color: #4caf50;
 }
 
-.btn-cancel {
-  padding: 10px 20px;
+.statut.refuse {
+  background-color: #f44336;
+}
+
+.statut.attente {
   background-color: #ff9800;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.btn-cancel:hover {
-  background-color: #e68900;
 }
 </style>

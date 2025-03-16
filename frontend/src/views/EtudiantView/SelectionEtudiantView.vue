@@ -10,9 +10,8 @@
       </option>
     </select>
 
-    <!-- Affichage du nom de l'étudiant sélectionné -->
-    <p v-if="selectedEtudiant">Étudiant sélectionné : {{ getSelectedEtudiantName() }}</p>
-
+<!--    &lt;!&ndash; Affichage du nom de l'étudiant sélectionné &ndash;&gt;-->
+<!--    <p v-if="selectedEtudiant">Étudiant sélectionné : {{ getSelectedEtudiantName() }}</p>-->
   </div>
 </template>
 
@@ -22,30 +21,35 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const etudiants = ref([]) // Liste des étudiants
-const selectedEtudiant = ref("") // Étudiant sélectionné
+const selectedEtudiant = ref(sessionStorage.getItem('selectedEtudiant') || '') // Étudiant sélectionné
 
 const ETUDIANTS_URL = 'http://localhost:8989/api/etudiants'
 
+// Charger la liste des étudiants
 function getEtudiants() {
-  fetch(ETUDIANTS_URL, { method: "GET" }) // Requête GET
-    .then(response => response.json()) // Convertir la réponse en JSON
-    .then(data => { etudiants.value = data }) // Mettre à jour la liste des étudiants
-    .catch(error => console.log("Erreur lors du chargement des étudiants :", error)) // Gestion d'erreur
+  fetch(ETUDIANTS_URL)
+    .then(response => response.json())
+    .then(data => { etudiants.value = data })
+    .catch(error => console.log("Erreur lors du chargement des étudiants :", error))
 }
 
 // Enregistrer l'étudiant sélectionné et rediriger vers l'accueil
 function selectEtudiant() {
-  sessionStorage.setItem('selectedEtudiant', selectedEtudiant.value) // Sauvegarde en session
+  const etudiant = etudiants.value.find(e => e.idEtudiant == selectedEtudiant.value)
+  if (etudiant) {
+    // Sauvegarde ID + Nom et Prénom pour affichage dans les notifications
+    sessionStorage.setItem('selectedEtudiant', selectedEtudiant.value)
+    sessionStorage.setItem('selectedEtudiantName', `${etudiant.nom} ${etudiant.prenom}`)
+  }
   router.push('/etudiant') // Redirection vers la page d'accueil étudiant
 }
 
-// Trouver le nom de l'étudiant sélectionné
-function getSelectedEtudiantName() {
-  const etudiant = etudiants.value.find(e => e.idEtudiant == selectedEtudiant.value)
-  return etudiant ? `${etudiant.nom} ${etudiant.prenom}` : ""
-}
+// // Trouver le nom de l'étudiant sélectionné
+// function getSelectedEtudiantName() {
+//   return sessionStorage.getItem('selectedEtudiantName') || ""
+// }
 
-onMounted(getEtudiants) // Charger les étudiants au montage du composant
+onMounted(getEtudiants)
 </script>
 
 <style scoped>
@@ -64,5 +68,4 @@ p {
   margin-top: 10px;
   font-weight: bold;
 }
-
 </style>

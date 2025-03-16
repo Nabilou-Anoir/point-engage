@@ -168,7 +168,8 @@ function submitParticipation() {
     dateFinParticipation: dateFinParticipation.value,
     descriptionParticipation: descriptionParticipation.value,
     totalPoints: null,
-    nbParticipation: null
+    nbParticipation: null,
+    statut: null
   }
 
   fetch(PARTICIPES_URL, {
@@ -178,7 +179,8 @@ function submitParticipation() {
   })
     .then(response => response.json())
     .then(() => {
-      alert("Participation créée avec succès !");
+      alert("Votre engagement fait la différence! " +
+        " Participation créée avec succès !");
       router.push("/AcceuilEtudiantView");
     })
     .catch(error => {
@@ -194,8 +196,8 @@ function handleCancel() {
 
 <style scoped>
 .fiche-form-container {
-  max-width: 700px; /* largeur réduite */
-  margin: 40px auto; /* centré horizontalement avec une marge supérieure et inférieure */
+  max-width: 700px;
+  margin: 40px auto;
   background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 8px;
