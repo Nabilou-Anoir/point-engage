@@ -59,29 +59,31 @@ function getHistorique() {
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      const participations = data._embedded?.participes || []
+      const participations = (data._embedded && data._embedded.participes) ? data._embedded.participes : []
 
+      // Charger les détails de chaque participation (action et semestre)
       const fetchDetails = participations.map(item => {
         const actionUrl = `${ACTIONS_URL}/${item.id.idAction}`
         const semestreUrl = `${SEMESTRES_URL}/${item.id.idSemestre}`
 
         return fetch(actionUrl)
-          .then(r => r.json())
+          .then(response => response.json())
           .then(actionData => {
             item.action = actionData
             return fetch(semestreUrl)
           })
-          .then(r => r.json())
+          .then(response => response.json())
           .then(semestreData => {
             item.semestre = semestreData
             return item
           })
           .catch(err => {
-            console.error('Erreur lors du chargement des détails:', err)
-            return item
+            console.error('❌ Erreur chargement des détails :', err)
+            return item // Retourne la participation même si action ou semestre échoue
           })
       })
 
+      // Une fois toutes les requêtes terminées, mise à jour de l'historique
       return Promise.all(fetchDetails)
     })
     .then(results => {
@@ -90,7 +92,7 @@ function getHistorique() {
       }
     })
     .catch(err => {
-      console.error('Erreur lors du chargement de l\'historique :', err)
+      console.error('❌ Erreur chargement de l\'historique :', err)
     })
 }
 

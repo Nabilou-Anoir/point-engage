@@ -1,91 +1,85 @@
 <template>
   <div id="app">
-    <!-- Si la route est '/role', on affiche uniquement le contenu sans Topbar ni Sidebar -->
-    <div v-if="!showLayout">
-      <router-view />
-    </div>
-
-    <!-- Sinon, on affiche le layout complet -->
-    <div v-else>
-      <Topbar />
+    <!-- Vérifie si l'utilisateur est un étudiant et s'il n'est PAS sur la page login -->
+    <template v-if="isEtudiant && !isLoginPage">
+      <TopbarEtudiant />
       <div class="layout">
-        <!-- Sidebar affichée selon la route -->
-        <Sidebar v-if="showSidebar" />
-        
-        <!-- Contenu principal -->
-        <div class="main-content" :class="{ 'full-width': !showSidebar }">
-          <router-view />
+        <SidebarEtudiant />
+        <div class="main-content">
+          <router-view v-slot="{ Component }">
+            <component :is="Component" v-if="Component" />
+            <p v-else>❌ Aucun composant trouvé</p>
+          </router-view>
         </div>
       </div>
-    </div>
+    </template>
+
+    <!-- Si ce n'est pas un étudiant, afficher uniquement le contenu -->
+    <template v-else>
+      <div class="layout">
+        <div class="main-content">
+          <router-view v-slot="{ Component }">
+            <component :is="Component" v-if="Component" />
+            <p v-else>❌ Aucun composant trouvé</p>
+          </router-view>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
-import Sidebar from "@/components/sidebar.vue";  // Harmonisation avec le nom standard
-import Topbar from "@/components/Topbar.vue";    // Harmonisation avec le nom standard
+import SidebarEtudiant from "@/components/SidebarEtudiant.vue";
+import TopbarEtudiant from "@/components/TopbarEtudiant.vue";
 
+const isEtudiant = ref(false);
+const isLoginPage = ref(false);
 const route = useRoute();
 
-// Détermine si l'on affiche le layout complet (Topbar + Sidebar)
-const showLayout = computed(() => route.path !== "/role");
+// Vérifier si l'utilisateur connecté est un étudiant
+const checkUserRole = () => {
+  const loggedInUser = sessionStorage.getItem("loggedInUser");
+  console.log("🔍 Vérification de l'utilisateur connecté :", loggedInUser);
 
-// Détermine si la Sidebar doit être affichée
-const showSidebar = computed(() => {
-  return (
-    route.name !== "ProfilView" &&
-    route.name !== "HistoriqueView" &&
-    route.name !== "ModifierReferentielView"
-  );
+  if (loggedInUser) {
+    const user = JSON.parse(loggedInUser);
+    console.log("👤 Rôle de l'utilisateur :", user.role?.name);
+
+    // Vérifie si l'utilisateur a bien le rôle "ROLE_ETUDIANT"
+    isEtudiant.value = user.role?.name === "ROLE_ETUDIANT";
+  } else {
+    isEtudiant.value = false;
+  }
+};
+
+// Vérifier si l'on est sur la page de connexion
+const checkLoginPage = () => {
+  isLoginPage.value = route.path === "/login";
+};
+
+// Vérifie les changements de route pour voir si on passe sur login
+watch(route, () => {
+  checkLoginPage();
+  checkUserRole(); // Vérifier à chaque changement de route si l'utilisateur est un étudiant
+});
+
+// Vérifier au démarrage si l'utilisateur est déjà connecté
+onMounted(() => {
+  checkUserRole();
+  checkLoginPage();
 });
 </script>
 
 <style>
-#app {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Layout principal */
 .layout {
   display: flex;
-  flex: 1;
-  margin-top: 80px; /* Espace sous la Topbar */
+  height: 100vh;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 250px;
-  height: calc(100vh - 80px); /* Ajuste la hauteur pour éviter le débordement */
-  position: fixed;
-  top: 80px;
-  left: 0;
-  background-color: #6a3fa0;
-  z-index: 900;
-  border-top-right-radius: 20px;
-  border-bottom-right-radius: 20px;
-  overflow-y: auto;
-  margin-top: 50px;
-  padding: 10px;
-}
-
-/* Contenu principal */
 .main-content {
   flex: 1;
-  margin-left: 250px; /* Décalage pour la Sidebar */
   padding: 20px;
-  background-color: #f5f5f5;
-  transition: margin-left 0.3s ease;
-}
-
-/* Mode plein écran (quand la Sidebar est masquée) */
-.main-content.full-width {
-  margin-left: 0;
 }
 </style>

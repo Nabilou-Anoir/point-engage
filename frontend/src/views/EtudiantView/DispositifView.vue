@@ -1,5 +1,6 @@
 <!-- src/views/DispositifView.vue -->
 <template>
+
   <div class="dispositif-container">
     <h1>Dispositif Ingénieur Engagé</h1>
 
@@ -124,6 +125,7 @@
 
 <script setup>
 // Cette vue est statique, aucune logique JavaScript n'est requise pour l'instant.
+import TopbarEtudiant from "@/components/TopbarEtudiant.vue";
 </script>
 
 <style scoped>

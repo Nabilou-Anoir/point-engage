@@ -86,3 +86,10 @@ VALUES (2, 2, 2, 0.00, 2, '2025-02-02', '2025-02-03', 'Participation moyenne', F
 
 INSERT INTO participe (id_etudiant, id_action, id_semestre, total_Points, nb_Participation, date_Debut_Participation, date_Fin_Participation, description_Participation, statut)
 VALUES (3, 3, 3, 0.30, 1, '2025-02-03', '2025-02-04', 'Participation satisfaisante', TRUE);
+
+-- Insertion des rôles dans la table role
+INSERT INTO role (name) VALUES ('ROLE_ETUDIANT');
+INSERT INTO role (name) VALUES ('ROLE_DIRECTEUR');
+INSERT INTO role (name) VALUES ('ROLE_REFERENT');
+INSERT INTO role (name) VALUES ('ROLE_SERVICE_SCOLARITE');
+

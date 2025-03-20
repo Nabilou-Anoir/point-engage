@@ -1,134 +1,125 @@
+<!-- src/views/EtudiantView/AccueilEtudiantView.vue -->
 <template>
-  <div class="accueil-container">
-    <h2>Votre Accueil</h2>
+  <div class="layout">
 
-    <!-- Sélection de l'étudiant (affiché uniquement si aucun étudiant n'est sélectionné) -->
-    <div v-if="!selectionEtudiant" class="form-group">
-      <label>Étudiant <span class="required">*</span></label>
-      <select v-model="selectionEtudiant" @change="updateStats">
-        <option disabled value="">-- Sélectionnez un étudiant --</option>
-        <option v-for="et in etudiants" :key="et.idEtudiant" :value="et.idEtudiant">
-          {{ et.nom }} {{ et.prenom }}
-        </option>
-      </select>
-    </div>
-
-    <!-- Zone d'affichage des statistiques -->
-    <div v-if="statsDisponible" class="stats-section">
-      <h3>Bonjour, {{ nomEtudiantSelectionne }} !</h3>
-
-      <div class="stats-cards">
-        <div class="stat-card">
-          <h4>Total de points obtenus</h4>
-          <p>{{ totalPointsValides }}</p>
+    <div class="main-content">
+      <!-- Contenu de la page d'accueil -->
+      <div class="accueil-container">
+        <h2>Votre Accueil</h2>
+        <div v-if="studentLoaded" class="stats-section">
+          <h3>Bonjour, {{ student.prenom }} {{ student.nom }} !</h3>
+          <div class="stats-cards">
+            <div class="stat-card">
+              <h4>Total de points obtenus</h4>
+              <p>{{ totalPointsValides }}</p>
+            </div>
+            <div class="stat-card">
+              <h4>Nombre de participations</h4>
+              <p>{{ nombreParticipations }}</p>
+            </div>
+            <div class="stat-card">
+              <h4>Fiches en cours de validation</h4>
+              <p>{{ nbFichesEnCours }}</p>
+            </div>
+          </div>
+          <p>
+            Pour plus d'info,
+            <router-link to="/dispositif" class="info-link">
+              cliquez ici
+            </router-link>
+          </p>
         </div>
-        <div class="stat-card">
-          <h4>Nombre de participations</h4>
-          <p>{{ nombreParticipations }}</p>
-        </div>
-        <div class="stat-card">
-          <h4>Fiche en cours de validation</h4>
-          <p>{{ nbFichesEnCours }}</p>
+        <div v-else class="stats-section">
+          <p>Chargement des informations...</p>
         </div>
       </div>
-
-      <p>
-        Pour plus d'info,
-        <router-link to="/dispositif" class="info-link">
-          cliquez ici
-        </router-link>
-      </p>
-    </div>
-    <div v-else class="stats-section">
-      <p>Aucun historique disponible.</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from "vue";
 
-const router = useRouter()
+const student = ref(null);
+const totalPointsValides = ref(0);
+const nombreParticipations = ref(0);
+const nbFichesEnCours = ref(0);
+const studentLoaded = ref(false);
 
-// Données réactives
-const etudiants = ref([])
-const selectionEtudiant = ref(sessionStorage.getItem('selectedEtudiant') || '')
-const totalPointsValides = ref(0)
-const nombreParticipations = ref(0)
-const nbFichesEnCours = ref(0)
-const nomEtudiantSelectionne = ref('')
+const STUDENT_API_URL = "http://localhost:8989/api/etudiants/byEmail";
+const PARTICIPATIONS_API_URL =
+  "http://localhost:8989/api/participes/search/findByIdIdEtudiant";
 
-// Affichage conditionnel des statistiques
-const statsDisponible = computed(() => {
-  return selectionEtudiant.value && nombreParticipations.value > 0
-})
+onMounted(async () => {
+  const loggedInUser = sessionStorage.getItem("loggedInUser");
+  if (loggedInUser) {
+    const user = JSON.parse(loggedInUser);
+    console.log("🟢 Utilisateur connecté:", user);
 
-// Endpoints API
-const ETUDIANTS_URL = 'http://localhost:8989/api/etudiants'
-const PARTICIPES_SEARCH_URL = 'http://localhost:8989/api/participes/search/findByIdIdEtudiant'
-
-// Charger les étudiants
-function getEtudiants() {
-  fetch(ETUDIANTS_URL)
-    .then(response => response.json())
-    .then(data => {
-      etudiants.value = data
-      if (selectionEtudiant.value) {
-        updateStats() // Charger immédiatement les stats si un étudiant est déjà sélectionné
+    try {
+      // Récupérer l'étudiant par e-mail
+      const studentResponse = await fetch(
+        `${STUDENT_API_URL}?email=${encodeURIComponent(user.email)}`
+      );
+      if (!studentResponse.ok) {
+        throw new Error("Erreur lors du chargement de l’étudiant");
       }
-    })
-    .catch(error => console.error("Erreur lors du chargement des étudiants :", error))
-}
+      const studentData = await studentResponse.json();
+      student.value = studentData;
 
-// Mettre à jour les statistiques de l'étudiant sélectionné
-function updateStats() {
-  if (!selectionEtudiant.value) return
+      // Récupérer les participations
+      const participationsResponse = await fetch(
+        `${PARTICIPATIONS_API_URL}?idEtudiant=${student.value.idEtudiant}`
+      );
+      if (!participationsResponse.ok) {
+        throw new Error("Erreur lors du chargement des participations");
+      }
+      const participationsData = await participationsResponse.json();
+      const participations = participationsData._embedded?.participes || [];
 
-  sessionStorage.setItem('selectedEtudiant', selectionEtudiant.value) // Enregistrer la sélection
+      let sumPoints = 0;
+      let countEnCours = 0;
 
-  const etu = etudiants.value.find(e => e.idEtudiant == selectionEtudiant.value)
-  nomEtudiantSelectionne.value = etu ? etu.prenom : ''
-
-  fetch(`${PARTICIPES_SEARCH_URL}?idEtudiant=${selectionEtudiant.value}`)
-    .then(response => response.json())
-    .then(data => {
-      const participations = data._embedded?.participes || []
-      let sumPoints = 0
-      let countEnCours = 0
-
-      participations.forEach(item => {
+      participations.forEach((item) => {
         if (item.statut === true && item.totalPoints) {
-          sumPoints += item.totalPoints
+          sumPoints += item.totalPoints;
         }
         if (item.statut === null) {
-          countEnCours++
+          countEnCours++;
         }
-      })
+      });
 
-      totalPointsValides.value = sumPoints
-      nombreParticipations.value = participations.length
-      nbFichesEnCours.value = countEnCours
-    })
-    .catch(error => console.error("Erreur lors du chargement des participations :", error))
-}
-
-onMounted(getEtudiants)
+      totalPointsValides.value = sumPoints;
+      nombreParticipations.value = participations.length;
+      nbFichesEnCours.value = countEnCours;
+      studentLoaded.value = true;
+    } catch (error) {
+      console.error(
+        "Erreur lors du chargement des informations de l'étudiant :",
+        error
+      );
+    }
+  } else {
+    console.error("Aucun utilisateur connecté trouvé !");
+  }
+});
 </script>
 
 <style scoped>
+.layout {
+  display: flex;
+  height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+}
+
 .accueil-container {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.required {
-  color: red;
 }
 
 .stats-section {

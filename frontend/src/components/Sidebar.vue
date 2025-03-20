@@ -48,7 +48,7 @@ const userInitials = computed(() => {
 // Éléments du menu
 const menuItems = ref([
   { path: "/sessions", text: "Gérer les sessions", icon: "fas fa-calendar-alt" },
-  { path: "/referent", text: "Envoyer les fiches aux référents", icon: "fas fa-paper-plane" }, 
+  { path: "/referent", text: "Envoyer les fiches aux référents", icon: "fas fa-paper-plane" },
   { path: "/attribuer-points", text: "Attribuer les points", icon: "fas fa-star" },
   { path: "/historique", text: "Historique", icon: "fas fa-history" },
   { path: "/modifier-referentiel", text: "Modifier les référentiels", icon: "fas fa-users-cog" },

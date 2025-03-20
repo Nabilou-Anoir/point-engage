@@ -3,16 +3,16 @@
   <nav class="topbar">
     <div class="left-links">
       <!-- Logo ou titre -->
-      <router-link to="/etudiant" class="logo">
+      <router-link to="/etudiant/accueil" class="logo">
         ISIS Ingénieur Santé Numérique
       </router-link>
     </div>
 
     <div class="right-links">
-      <router-link to="/etudiant" class="nav-link">Accueil</router-link>
-      <router-link to="/notifications" class="nav-link">Notifications</router-link>
+      <router-link to="/etudiant/accueil" class="nav-link">Accueil</router-link>
+      <router-link to="/notifications-etudiant" class="nav-link">Notifications</router-link>
       <router-link to="/profil" class="nav-link">Profil</router-link>
-      <router-link to="/" class="nav-link">Déconnexion</router-link>
+      <router-link to="/login" class="nav-link">Déconnexion</router-link>
     </div>
   </nav>
 </template>

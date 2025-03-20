@@ -192,6 +192,8 @@ function submitParticipation() {
 function handleCancel() {
   router.push('/')
 }
+sessionStorage.setItem("ficheSoumise", "true")
+
 </script>
 
 <style scoped>

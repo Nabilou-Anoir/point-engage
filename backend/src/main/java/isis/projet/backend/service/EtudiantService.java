@@ -81,4 +81,7 @@ public class EtudiantService {
         }
         etudiantRepository.deleteById(id);
     }
+    public Etudiant findByEmail(String email) {
+        return etudiantRepository.findByEmail(email);
+    }
 }

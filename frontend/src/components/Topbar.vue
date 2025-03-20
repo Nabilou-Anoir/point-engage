@@ -18,7 +18,7 @@
           <span class="notif-count">{{ notifCount }}</span>
         </div>
       </router-link>
-      <router-link to="/profil" class="nav-link" :class="{ active: isActive('/profil') }"> 
+      <router-link to="/profil" class="nav-link" :class="{ active: isActive('/profil') }">
         <i class="fas fa-user"></i>
         <span>Profil</span>
       </router-link>

@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-// 📌 Import des vues générales
-import RoleSelection from "@/views/RoleSelection.vue";
+// Import de la vue de connexion
+import LoginView from "@/views/LoginView.vue";
+
+// Import des autres vues (directeur, étudiant, etc.)
 import AccueilView from "@/views/DirecteurView/views/AccueilView.vue";
 import NotificationsView from "@/views/DirecteurView/views/NotificationsView.vue";
 import ProfilView from "@/views/DirecteurView/views/ProfilView.vue";
@@ -13,23 +15,21 @@ import ModifierReferentielView from "@/views/DirecteurView/views/ModifierReferen
 import HistoriqueView from "@/views/DirecteurView/views/HistoriqueView.vue";
 import PointCommuleView from "@/views/DirecteurView/views/PointCommuleView.vue";
 
-
-// 📌 Import des vues spécifiques aux étudiants
-import SelectionEtudiantView from "@/views/EtudiantView/SelectionEtudiantView.vue";
 import AccueilEtudiantView from "@/views/EtudiantView/AccueilEtudiantView.vue";
 import SaisirFicheView from "@/views/EtudiantView/SaisirFicheView.vue";
 import HistoriqueFichesView from "@/views/EtudiantView/HistoriqueFichesView.vue";
 import DispositifView from "@/views/EtudiantView/DispositifView.vue";
+import NotificationsEtudiantView from "@/views/EtudiantView/NotificationsEtudiantView.vue";
+import ProfilEtudiantView from "@/views/EtudiantView/ProfilEtudiantView.vue";
 
-// 📌 Définition des routes
 const routes = [
-  // Redirection vers la sélection de rôle
-  { path: "/", redirect: "/role" },
+  // Redirige la route racine vers la page de connexion
+  { path: "/", redirect: "/login" },
 
-  // Sélection du rôle
-  { path: "/role", component: RoleSelection },
+  // Route de la page de connexion
+  { path: "/login", name: "Login", component: LoginView },
 
-  // 📌 Routes générales accessibles par plusieurs rôles
+  // Routes générales (exemple pour le directeur)
   { path: "/accueil", name: "Accueil", component: AccueilView },
   { path: "/notifications", name: "Notifications", component: NotificationsView },
   { path: "/sessions", name: "Sessions", component: SessionsView },
@@ -41,27 +41,24 @@ const routes = [
   { path: "/historique", name: "Historique", component: HistoriqueView },
   { path: "/points-cumules", name: "PointsCumules", component: PointCommuleView },
 
-  // 📌 Routes spécifiques aux étudiants
-  { path: "/selection-etudiant", component: SelectionEtudiantView },
+
+  // route etudiant
   {
-    path: "/etudiant",
-    name: "AccueilEtudiant",
-    component: AccueilEtudiantView,
-    beforeEnter: (to, from, next) => {
-      const selectedEtudiant = sessionStorage.getItem("selectedEtudiant");
-      if (!selectedEtudiant) {
-        next("/selection-etudiant"); // Redirige si aucun étudiant sélectionné
-      } else {
-        next(); // Accès autorisé
-      }
-    },
+    path: "/etudiant/accueil",name: "AccueilEtudiant", component: AccueilEtudiantView,
   },
-  { path: "/saisir-fiche", name: "SaisirFiche", component: SaisirFicheView },
-  { path: "/historique-fiches", name: "HistoriqueFiches", component: HistoriqueFichesView },
+  { path: "/saisir-fiche", name: "SaisirFiche", component: SaisirFicheView
+  },
+  { path: "/historique-fiches", name: "HistoriqueFiches", component: HistoriqueFichesView
+  },
   { path: "/dispositif", name: "Dispositif", component: DispositifView },
+
+  { path: "/profil", name: "ProfilEtudiant", component: ProfilEtudiantView },
+
+  { path: "/notifications-etudiant", name: "NotificationEtudiant", component: NotificationsEtudiantView },
+
+
 ];
 
-// 📌 Création du routeur Vue
 const router = createRouter({
   history: createWebHistory(),
   routes,

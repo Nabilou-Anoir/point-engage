@@ -1,11 +1,13 @@
 package isis.projet.backend.controller;
 
+import isis.projet.backend.entity.Utilisateur;
 import isis.projet.backend.service.EtudiantService;
 import isis.projet.backend.entity.Etudiant;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import jakarta.validation.Valid;
@@ -73,5 +75,28 @@ public class EtudiantController {
     @DeleteMapping("/{id}")
     public void deleteEtudiant(@PathVariable Integer id) {
         etudiantService.deleteById(id);
+    }
+
+    @GetMapping("/etudiant/AccueilEtudiantView")
+    public String etudianthome (HttpSession session, Model model) {
+        Utilisateur user = (Utilisateur) session.getAttribute("loggedInUser");
+        if (user == null || user.getRole() == null || !user.getRole().getName().equals("ROLE_ETUDIANT")) {
+            // Si l'utilisateur n'est pas connecté ou n'est pas directeur, redirigez vers la page de connexion
+            return "redirect:/login";
+        }
+        model.addAttribute("user", user);
+        return "AccueilEtudiantView";  // Renvoie la vue dédiée au directeur (par exemple home_directeur.html)
+    }
+    @GetMapping("/byEmail")
+    public ResponseEntity<Etudiant> getEtudiantByEmail(@RequestParam String email) {
+        System.out.println("🔍 API appelée avec email: " + email);
+        Etudiant etudiant = etudiantService.findByEmail(email);
+
+        if (etudiant == null) {
+            System.out.println("❌ Étudiant non trouvé !");
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(etudiant);
     }
 }
