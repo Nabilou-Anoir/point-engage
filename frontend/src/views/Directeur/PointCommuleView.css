@@ -1,0 +1,135 @@
+.main-content {
+    padding: 20px;
+    font-family: 'Inter', sans-serif;
+    max-width: 1300px;
+    margin: 0 auto;
+    background-color: #f8f9fa;
+  }
+  
+  .title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #4a1f80;
+    margin-bottom: 25px;
+    text-align: start;
+  }
+  
+  /* 📌 Filtres */
+  .filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    align-items: center;
+  }
+  
+  .filter-select {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: white;
+    font-size: 14px;
+    color: #333;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .filter-select:focus {
+    border-color: #6A3FA0;
+    box-shadow: 0 0 8px rgba(106, 63, 160, 0.2);
+  }
+  
+  .search-input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: white;
+    font-size: 14px;
+    color: #333;
+    flex-grow: 1;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .search-input:focus {
+    border-color: #6A3FA0;
+    box-shadow: 0 0 8px rgba(106, 63, 160, 0.2);
+  }
+  
+  
+  
+  /* 📌 Tableau */
+  .table-container {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .custom-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .custom-table th {
+    
+    padding: 14px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #6A3FA0;
+    border-bottom: 2px solid #ddd;
+    text-align: left;
+  }
+  
+  .custom-table th:hover {
+    background: linear-gradient(135deg, #8E5ACD, #6A3FA0);
+  }
+  
+  .custom-table td {
+    padding: 14px;
+    border-bottom: 1px solid #ddd;
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .custom-table tr:hover {
+    background-color: rgba(106, 63, 160, 0.05);
+  }
+  
+  /* 📌 Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 25px;
+  }
+  
+  .pagination button {
+    background: linear-gradient(135deg, #6A3FA0, #8E5ACD);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease, transform 0.2s ease;
+    margin: 0 5px;
+  }
+  
+  .pagination button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .pagination button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #8E5ACD, #6A3FA0);
+    transform: translateY(-2px);
+  }
+  
+  .pagination button:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  .pagination span {
+    margin: 0 15px;
+    font-size: 14px;
+    color: #4a1f80;
+    font-weight: 500;
+  }

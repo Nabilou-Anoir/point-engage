@@ -1,0 +1,394 @@
+.main-layout {
+  display: flex; /* Utiliser Flexbox pour aligner la sidebar et le contenu principal */
+  max-height: 100%; 
+  max-width: 100%;
+}
+
+.sidebar {
+  width: 240px; 
+  background-color: #ffffff; 
+  padding: 24px;
+  border-right: 1px solid #eaeef3;
+  overflow-y: auto; 
+  flex-shrink: 0; 
+}
+
+.sidebar h3 {
+  font-size: 18px;
+  margin-bottom: 24px;
+  color: #2c3e50; /* Couleur de texte sombre et élégante */
+  font-weight: 600;
+  letter-spacing: -0.5px; /* Espacement des lettres pour un look moderne */
+}
+
+.filter-options {
+  display: flex;
+  flex-direction: column;
+}
+
+.annee-group {
+  margin-bottom: 16px;
+}
+
+.annee-group h4 {
+  cursor: pointer;
+  font-size: 15px;
+  margin-bottom: 12px;
+  color: #34495e; /* Couleur de texte légèrement plus claire */
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Espace entre l'icône et le texte */
+  transition: color 0.3s ease;
+}
+
+.annee-group h4:hover {
+  color: #6a3fa0; /* Changement de couleur au survol */
+}
+
+.annee-group h4::before {
+  content: "▸"; /* Icône flèche simple */
+  font-size: 12px;
+  color: #6a3fa0; /* Couleur du thème */
+  transition: transform 0.3s ease;
+}
+
+.annee-group h4.expanded::before {
+  transform: rotate(90deg); /* Rotation de l'icône lorsque le groupe est ouvert */
+}
+
+.semestre-group {
+  margin-left: 16px;
+  padding-left: 8px;
+  border-left: 2px solid #eaeef3; /* Ligne verticale pour séparer les semestres */
+}
+
+.semestre-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background-color: transparent; /* Fond transparent pour un look léger */
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.3s ease;
+  color: #555; /* Couleur de texte douce */
+  font-size: 14px;
+}
+
+.semestre-btn:hover {
+  background-color: #f8f9fa; /* Fond très léger au survol */
+  color: #6a3fa0; /* Changement de couleur au survol */
+  transform: translateX(4px); /* Légère translation pour un effet dynamique */
+}
+
+.semestre-btn.active {
+  background-color: #6a3fa0; /* Couleur du thème */
+  color: white;
+  font-weight: 500;
+}
+
+.semestre-btn::before {
+  content: "•"; /* Icône simple pour les semestres */
+  margin-right: 8px;
+  font-size: 16px;
+  color: #6a3fa0; /* Couleur du thème */
+  transition: color 0.3s ease;
+}
+
+.semestre-btn.active::before {
+  content: "✔"; /* Icône de validation pour les boutons actifs */
+  color: white;
+}
+
+/* 📌 Effets supplémentaires pour les boutons actifs */
+.semestre-btn.active:hover {
+  background-color: #5a2f90; /* Assombrir légèrement au survol */
+}
+
+/* Main Content */
+.main-content {
+  flex: 1; 
+  padding: 30px; 
+  background-color: #f5f5f5; 
+  overflow-y: auto; 
+  max-height: 100%; 
+  max-width: 100%;
+}
+
+.top-filter {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between; 
+  align-items: flex-end; 
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+ 
+}
+
+.right-group {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* Espace entre la barre de recherche et le bouton */
+  margin-left: auto; /* Pousse le groupe vers la droite */
+}
+
+.search-container {
+  display: flex;
+  flex: 1;
+  max-width:200px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 32px 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: #6a3fa0;
+  box-shadow: 0 0 0 3px rgba(106, 63, 160, 0.1);
+  outline: none;
+}
+
+.search-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #6a3fa0;
+}
+
+.filter-group {
+  flex: 1;
+  max-width: 150px
+}
+
+.filter-group label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #4a5568;
+  margin-bottom: 6px;
+  display: block;
+}
+
+
+
+.select-input {
+  width: 100%;
+  padding: 10px 32px 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #ffffff;
+  appearance: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.select-input:focus {
+  border-color: #6a3fa0;
+  box-shadow: 0 0 0 3px rgba(106, 63, 160, 0.1);
+  outline: none;
+}
+
+.select-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #6a3fa0;
+  pointer-events: none;
+}
+
+.download-btn {
+  padding: 10px 32px 10px 12px;
+  background: #6a3fa0;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s ease;
+}
+
+.download-btn:hover {
+  background: #5a2f90;
+}
+
+.download-icon {
+  font-size: 14px;
+}
+
+.filter-group.date-range {
+  display: flex; 
+  gap: 12px; 
+  align-items: flex-end; 
+  margin-bottom: 25px; 
+}
+
+.date-container {
+  flex: 1; 
+  max-width: 150px; 
+}
+
+.date-container label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #4a5568;
+  margin-bottom: 4px; 
+  display: block; 
+}
+
+.date-container .select-container {
+  width: 100%;
+}
+
+.date-container .select-input {
+  width: 100%;
+  padding: 8px 0; 
+  border: 1px solid #e2e8f0; 
+  
+  padding: 10px ;
+  font-size: 13px;
+ 
+  
+}
+
+.date-container .select-input:focus {
+  border-color: #4a90e2; /* Changer la couleur de la bordure en bas au focus */
+  
+}
+
+.date-container:first-child {
+  margin-right: 20px;
+}
+
+.filter-group .selectlabel {
+  font-size: 15px;
+  font-weight: 400;
+  color: #666;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* Title */
+.title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 20px;
+}
+
+/* Table Styles */
+
+.table-section {
+  margin-top: 20px; /* Espacement entre les filtres et la table */
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: 7px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-top: 20px; /* Ajouter un espace au-dessus de la table */
+}
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #ffffff; /* Fond blanc pour la table */
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 13px;
+  color: #4a5568;
+  border-bottom: 1px solid #e2e8f0; /* Bordure entre les lignes */
+}
+
+.styled-table th {
+  background: #f7fafc; /* Fond légèrement gris pour les en-têtes */
+  font-weight: 600;
+}
+
+.styled-table tbody tr:hover {
+  background: #f7fafc; /* Fond légèrement gris au survol */
+}
+
+.styled-table td {
+  vertical-align: middle; /* Alignement vertical au milieu */
+}
+
+/* Alignement spécifique pour les colonnes numériques */
+.align-right {
+  text-align: right;
+}
+
+.align-right input {
+  width: 100px; /* Largeur fixe pour les champs de saisie */
+  text-align: right;
+  margin-left: auto; /* Pousse le champ à droite */
+  display: block; /* Permet à margin-left: auto de fonctionner */
+}
+
+/* Styles pour les champs de saisie */
+.editable-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  text-align: right; /* Aligner le texte à droite */
+}
+
+.editable-input:focus {
+  border-color: #6a3fa0;
+  box-shadow: 0 0 0 3px rgba(106, 63, 160, 0.1);
+  outline: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid #e8ecef;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .top-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group,
+  .search-container {
+    min-width: 100%;
+  }
+}
