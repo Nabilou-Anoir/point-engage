@@ -1,14 +1,14 @@
 <template>
   <aside class="sidebar">
     <!-- Zone utilisateur -->
-    <div class="user-info" @click="toggleUserMenu">
+    <div class="user-info" @click="navigateToProfile">
       <div class="profile-pic">
-        <img :src="user.profileImage" alt="Profile" v-if="user.profileImage" />
+        <img :src="userData.profileImage" alt="Profile" v-if="userData.profileImage" />
         <span v-else>{{ userInitials }}</span>
       </div>
       <div class="user-details">
-        <h3 class="user-name">{{ user.name }}</h3>
-        <p class="user-email">{{ user.email }}</p>
+        <h3 class="user-name">{{ userData.name }}</h3>
+        <p class="user-email">{{ userData.email }}</p>
       </div>
     </div>
 
@@ -30,44 +30,59 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
-// Données utilisateur
-const user = ref({
-  name: 'Adrien Defossez',
-  email: 'adrien.defossez@univ-jfc.fr',
-  profileImage: '', // URL de l'image de profil
+// Récupérer la route actuelle pour déterminer le rôle de l'utilisateur
+const route = useRoute();
+const userRole = computed(() => {
+  return route.path.startsWith('/etudiant') ? 'etudiant' : 'directeur';
 });
 
-// Initiales de l'utilisateur
+// Définir les données utilisateur en fonction du rôle
+const userData = computed(() => {
+  return userRole.value === 'directeur'
+    ? { name: 'Adrien Defossez', email: 'adrien.defossez@univ-jfc.fr', profileImage: '' }
+    : { name: 'Ines Gribaa', email: 'ines.gribaa@univ-jfc.fr', profileImage: '' };
+});
+
+// Calculer les initiales de l'utilisateur
 const userInitials = computed(() => {
-  const names = user.value.name.split(' ');
-  return names.map((name) => name[0]).join('');
+  const names = userData.value.name.split(' ');
+  return names.map(name => name[0]).join('');
 });
 
-// Éléments du menu
-const menuItems = ref([
-  { path: "/sessions", text: "Gérer les sessions", icon: "fas fa-calendar-alt" },
-  { path: "/referent", text: "Envoyer les fiches aux référents", icon: "fas fa-paper-plane" },
-  { path: "/attribuer-points", text: "Attribuer les points", icon: "fas fa-star" },
-  { path: "/historique", text: "Historique", icon: "fas fa-history" },
-  { path: "/modifier-referentiel", text: "Modifier les référentiels", icon: "fas fa-users-cog" },
-  { path: "/modifier-acces", text: "Modifier les Accès", icon: "fas fa-key" },
-  { path: "/points-cumules", text: "Points cumulés", icon: "fas fa-chart-line" },
+// Menu pour le directeur
+const menuItemsDirecteur = ref([
+  { path: '/directeur/sessions', text: 'Gérer les sessions', icon: 'fas fa-calendar-alt' },
+  { path: '/directeur/referent', text: 'Envoyer les fiches aux référents', icon: 'fas fa-paper-plane' },
+  { path: '/directeur/attribuer-points', text: 'Attribuer les points', icon: 'fas fa-star' },
+  { path: '/directeur/historique', text: 'Historique', icon: 'fas fa-history' },
+  { path: '/directeur/modifier-referentiel', text: 'Modifier les référentiels', icon: 'fas fa-users-cog' },
+  { path: '/directeur/modifier-acces', text: 'Modifier les Accès', icon: 'fas fa-key' },
+  { path: '/directeur/points-cumules', text: 'Points cumulés', icon: 'fas fa-chart-line' },
 ]);
 
+// Menu pour l'étudiant (le chemin pour "Saisir une fiche" est corrigé ici)
+const menuItemsEtudiant = ref([
+  { path: '/saisir-fiche', text: 'Saisir une fiche', icon: 'fas fa-file-upload' },
+  { path: '/etudiant/historique-fiches', text: 'Consulter l’historique des fiches', icon: 'fas fa-history' },
+  { path: '/etudiant/proposer-activite', text: 'Proposer une activité hors référentiel', icon: 'fas fa-lightbulb' },
+]);
 
+// Sélectionner les éléments du menu selon le rôle
+const menuItems = computed(() => {
+  return userRole.value === 'directeur' ? menuItemsDirecteur.value : menuItemsEtudiant.value;
+});
 
-// Vérifier si un lien est actif
-const route = useRoute();
+// Fonction pour vérifier si le lien est actif
 const isActive = (path) => {
-  return route.path.startsWith(path);
+  return route.path === path;
 };
 
-
-// Toggle user menu (optionnel)
-const toggleUserMenu = () => {
-  console.log('User menu clicked');
+// Navigation vers la vue Profil (pour le directeur ici)
+const router = useRouter();
+const navigateToProfile = () => {
+  router.push({ path: '/directeur/profil' });
 };
 </script>
 
@@ -86,7 +101,6 @@ const toggleUserMenu = () => {
   transition: width 0.3s ease;
 }
 
-/* Customisation du scroll */
 .sidebar::-webkit-scrollbar {
   width: 5px;
 }
@@ -96,7 +110,6 @@ const toggleUserMenu = () => {
   border-radius: 10px;
 }
 
-/* Zone utilisateur */
 .user-info {
   display: flex;
   align-items: center;
@@ -106,7 +119,7 @@ const toggleUserMenu = () => {
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.3s ease;
-  flex-wrap: wrap; /* Permet au texte de se comporter correctement sur des petits écrans */
+  flex-wrap: wrap;
 }
 
 .user-info:hover {
@@ -150,11 +163,10 @@ const toggleUserMenu = () => {
   color: rgba(255, 255, 255, 0.8);
   text-overflow: ellipsis;
   overflow: hidden;
-  white-space: nowrap; /* Empêche l'email de passer à la ligne */
-  max-width: 160px; /* Limite la largeur de l'email */
+  white-space: nowrap;
+  max-width: 160px;
 }
 
-/* Menu latéral */
 .menu {
   display: flex;
   flex-direction: column;

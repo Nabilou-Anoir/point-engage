@@ -1,28 +1,28 @@
 <template>
   <div class="login-container">
     <div class="form-box">
-      <h2 v-if="isLoginMode">🔑 Connexion</h2>
-      <h2 v-else>📝 Inscription</h2>
+      <h2 v-if="isLoginMode">Connexion</h2>
+      <h2 v-else>Inscription</h2>
 
       <form @submit.prevent="isLoginMode ? login() : register()">
         <div class="input-group">
-          <label for="email">📧 Email :</label>
+          <label for="email"> Email :</label>
           <input type="email" id="email" v-model="email" @input="detectRole" required placeholder="Entrez votre email..." />
         </div>
 
         <div v-if="!isLoginMode">
           <div class="input-group">
-            <label for="username">👤 Nom d'utilisateur :</label>
+            <label for="username"> Nom d'utilisateur :</label>
             <input type="text" id="username" v-model="username" required placeholder="Choisissez un nom d'utilisateur..." />
           </div>
 
           <div class="input-group">
-            <label for="nom">📝 Nom :</label>
+            <label for="nom">Nom :</label>
             <input type="text" id="nom" v-model="nom" required placeholder="Entrez votre nom..." />
           </div>
 
           <div class="input-group">
-            <label for="prenom">👤 Prénom :</label>
+            <label for="prenom"> Prénom :</label>
             <input type="text" id="prenom" v-model="prenom" required placeholder="Entrez votre prénom..." />
           </div>
 
@@ -33,11 +33,11 @@
         </div>
 
         <div class="input-group">
-          <label for="password">🔒 Mot de passe :</label>
+          <label for="password"> Mot de passe :</label>
           <input type="password" id="password" v-model="password" required placeholder="Entrez votre mot de passe..." />
         </div>
 
-        <p class="role-detected">🎭 Rôle détecté : <strong>{{ detectedRole }}</strong></p>
+        <p class="role-detected"> Rôle détecté : <strong>{{ detectedRole }}</strong></p>
 
         <button class="btn primary-btn" type="submit">
           {{ isLoginMode ? "🚀 Se connecter" : "✨ S'inscrire" }}
@@ -72,12 +72,10 @@ export default {
     const errorMessage = ref("");
     const router = useRouter();
 
-    // Détecter le rôle automatiquement selon l'email
+    // Détecter le rôle en fonction de l'email saisi
     const detectRole = () => {
       if (!email.value) return;
-
       const emailValue = email.value.toLowerCase();
-
       if (emailValue === "adrien.defossez@univ-jfc.fr") {
         detectedRole.value = "ROLE_DIRECTEUR";
       } else if (emailValue === "scolarite-isis@univ-jfc.fr") {
@@ -91,7 +89,7 @@ export default {
       }
     };
 
-    // Connexion
+    // Fonction de connexion
     const login = async () => {
       errorMessage.value = "";
       try {
@@ -102,9 +100,14 @@ export default {
 
         if (response.status === 200) {
           const user = response.data;
+          // Sauvegarder l'utilisateur dans le sessionStorage
           sessionStorage.setItem("loggedInUser", JSON.stringify(user));
 
-          switch (user.role) {
+          // Selon la structure de l'objet user, le rôle peut être un objet ou une chaîne
+          const role = typeof user.role === "object" ? user.role.name : user.role;
+
+          // Redirection en fonction du rôle
+          switch (role) {
             case "ROLE_ETUDIANT":
               router.push("/etudiant/accueil");
               break;
@@ -118,7 +121,7 @@ export default {
               router.push("/scolarite/accueil");
               break;
             default:
-              router.push("/role");
+              router.push("/login");
           }
         }
       } catch (error) {
@@ -126,7 +129,7 @@ export default {
       }
     };
 
-    // Inscription
+    // Fonction d'inscription (non modifiée)
     const register = async () => {
       errorMessage.value = "";
       try {
@@ -136,7 +139,7 @@ export default {
           password: password.value,
           nom: nom.value,
           prenom: prenom.value,
-          promotion: detectedRole.value === "ROLE_ETUDIANT" ? promotion.value : null, // Promotion uniquement pour les étudiants
+          promotion: detectedRole.value === "ROLE_ETUDIANT" ? promotion.value : null,
           role: { name: detectedRole.value }
         });
 
@@ -167,7 +170,7 @@ export default {
 </script>
 
 <style scoped>
-/* 🎨 Fond principal */
+/* Vos styles ici (identiques à ceux que vous utilisez) */
 .login-container {
   display: flex;
   justify-content: center;
@@ -175,8 +178,6 @@ export default {
   height: 100vh;
   background: linear-gradient(135deg, #6a11cb, #2575fc);
 }
-
-/* 📦 Boîte du formulaire */
 .form-box {
   background: rgba(255, 255, 255, 0.95);
   padding: 40px;
@@ -185,22 +186,17 @@ export default {
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
   text-align: center;
   color: #333;
-  animation: fadeIn 0.5s ease-in-out;
 }
-
-/* 📝 Champs d'entrée */
 .input-group {
   margin-bottom: 15px;
   text-align: left;
 }
-
 .input-group label {
   font-weight: bold;
   display: block;
   margin-bottom: 5px;
   color: #444;
 }
-
 .input-group input {
   width: 100%;
   padding: 12px;
@@ -211,22 +207,17 @@ export default {
   background: #f9f9f9;
   transition: 0.3s ease-in-out;
 }
-
 .input-group input:focus {
   border-color: #6a11cb;
   outline: none;
   background: #fff;
 }
-
-/* 🎭 Rôle détecté */
 .role-detected {
   font-size: 1rem;
   margin-bottom: 10px;
   font-weight: bold;
   color: #6a11cb;
 }
-
-/* 🎨 Boutons */
 .btn {
   width: 100%;
   padding: 12px;
@@ -235,18 +226,14 @@ export default {
   font-weight: bold;
   cursor: pointer;
 }
-
 .primary-btn {
   background: #4CAF50;
   color: white;
 }
-
 .secondary-btn {
   background: #ff9800;
   color: white;
 }
-
-/* ⚠️ Message d'erreur */
 .error-msg {
   color: #ff4d4d;
   font-weight: bold;

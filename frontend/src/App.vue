@@ -1,85 +1,78 @@
 <template>
   <div id="app">
-    <!-- Vérifie si l'utilisateur est un étudiant et s'il n'est PAS sur la page login -->
-    <template v-if="isEtudiant && !isLoginPage">
-      <TopbarEtudiant />
-      <div class="layout">
-        <SidebarEtudiant />
-        <div class="main-content">
-          <router-view v-slot="{ Component }">
-            <component :is="Component" v-if="Component" />
-            <p v-else>❌ Aucun composant trouvé</p>
-          </router-view>
-        </div>
+    <!-- Afficher le Topbar uniquement si on n'est pas sur la page Login -->
+    <Topbar v-if="showHeader" />
+    <div class="layout">
+      <!-- Afficher le Sidebar uniquement si on n'est pas sur la page Login -->
+      <Sidebar v-if="showSidebar" />
+      <!-- Zone de contenu : router-view -->
+      <div class="main-content" :class="{ 'full-width': !showSidebar }">
+        <router-view />
       </div>
-    </template>
-
-    <!-- Si ce n'est pas un étudiant, afficher uniquement le contenu -->
-    <template v-else>
-      <div class="layout">
-        <div class="main-content">
-          <router-view v-slot="{ Component }">
-            <component :is="Component" v-if="Component" />
-            <p v-else>❌ Aucun composant trouvé</p>
-          </router-view>
-        </div>
-      </div>
-    </template>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { computed } from "vue";
 import { useRoute } from "vue-router";
-import SidebarEtudiant from "@/components/SidebarEtudiant.vue";
-import TopbarEtudiant from "@/components/TopbarEtudiant.vue";
+import Sidebar from "@/components/Sidebar.vue";
+import Topbar from "@/components/Topbar.vue";
 
-const isEtudiant = ref(false);
-const isLoginPage = ref(false);
+// Récupérer la route active
 const route = useRoute();
 
-// Vérifier si l'utilisateur connecté est un étudiant
-const checkUserRole = () => {
-  const loggedInUser = sessionStorage.getItem("loggedInUser");
-  console.log("🔍 Vérification de l'utilisateur connecté :", loggedInUser);
+// Définir les noms de routes pour lesquelles Topbar/Sidebar ne doivent pas s'afficher
+const excludedRoutes = ["Login"]; // Ajoutez "Register" ou autres si nécessaire
 
-  if (loggedInUser) {
-    const user = JSON.parse(loggedInUser);
-    console.log("👤 Rôle de l'utilisateur :", user.role?.name);
-
-    // Vérifie si l'utilisateur a bien le rôle "ROLE_ETUDIANT"
-    isEtudiant.value = user.role?.name === "ROLE_ETUDIANT";
-  } else {
-    isEtudiant.value = false;
-  }
-};
-
-// Vérifier si l'on est sur la page de connexion
-const checkLoginPage = () => {
-  isLoginPage.value = route.path === "/login";
-};
-
-// Vérifie les changements de route pour voir si on passe sur login
-watch(route, () => {
-  checkLoginPage();
-  checkUserRole(); // Vérifier à chaque changement de route si l'utilisateur est un étudiant
-});
-
-// Vérifier au démarrage si l'utilisateur est déjà connecté
-onMounted(() => {
-  checkUserRole();
-  checkLoginPage();
-});
+// Calculer si la Sidebar et le Topbar doivent être affichés
+const showSidebar = computed(() => !excludedRoutes.includes(route.name));
+const showHeader = computed(() => !excludedRoutes.includes(route.name));
 </script>
 
 <style>
-.layout {
-  display: flex;
+#app {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
+/* Layout principal : sidebar + contenu */
+.layout {
+  display: flex;
+  flex: 1;
+  margin-top: 80px; /* Espace sous la Topbar */
+}
+
+/* Style de la Sidebar */
+.sidebar {
+  width: 250px;
+  height: calc(100vh - 80px);
+  position: fixed;
+  top: 80px;
+  left: 0;
+  background-color: #6a3fa0;
+  z-index: 900;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+/* Style de la zone de contenu */
 .main-content {
   flex: 1;
+  margin-left: 250px;
   padding: 20px;
+  background-color: #f5f5f5;
+  transition: margin-left 0.3s ease;
+}
+
+/* Plein écran lorsque la Sidebar n'est pas affichée */
+.main-content.full-width {
+  margin-left: 0;
 }
 </style>

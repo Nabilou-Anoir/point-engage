@@ -7,27 +7,69 @@
 
     <!-- Section centrale : Liens de navigation -->
     <div class="center-section">
-      <router-link to="/accueil" class="nav-link" :class="{ active: isActive('/accueil') }">
+      <!-- Liens communs -->
+      <router-link to="/" class="nav-link" :class="{ active: isActive('/') }">
         <i class="fas fa-home"></i>
         <span>Accueil</span>
       </router-link>
-      <router-link to="/notifications" class="nav-link" :class="{ active: isActive('/notifications') }">
-        <i class="fas fa-bell"></i>
-        <span>Notifications</span>
-        <div class="notif-icon" v-if="notifCount > 0">
-          <span class="notif-count">{{ notifCount }}</span>
-        </div>
-      </router-link>
-      <router-link to="/profil" class="nav-link" :class="{ active: isActive('/profil') }">
-        <i class="fas fa-user"></i>
-        <span>Profil</span>
-      </router-link>
+
+      <!-- Liens spécifiques au directeur -->
+      <template v-if="userRole === 'directeur'">
+        <router-link to="/directeur/notifications" class="nav-link" :class="{ active: isActive('/directeur/notifications') }">
+          <i class="fas fa-bell"></i>
+          <span>Notifications</span>
+          <div class="notif-icon" v-if="notifCount > 0">
+            <span class="notif-count">{{ notifCount }}</span>
+          </div>
+        </router-link>
+        <router-link to="/directeur/profil" class="nav-link" :class="{ active: isActive('/directeur/profil') }"> 
+          <i class="fas fa-user"></i>
+          <span>Profil</span>
+        </router-link>
+      </template>
+
+      <!-- Liens spécifiques à l'étudiant -->
+      <template v-if="userRole === 'etudiant'">
+        <router-link to="/etudiant/notifications" class="nav-link" :class="{ active: isActive('/etudiant/notifications') }">
+          <i class="fas fa-bell"></i>
+          <span>Notifications</span>
+          <div class="notif-icon" v-if="notifCount > 0">
+            <span class="notif-count">{{ notifCount }}</span>
+          </div>
+        </router-link>
+        <router-link to="/etudiant/profil" class="nav-link" :class="{ active: isActive('/etudiant/profil') }"> 
+          <i class="fas fa-user"></i>
+          <span>Profil</span>
+        </router-link>
+      </template>
+
+      <!-- Liens spécifiques au référent -->
+      <template v-if="userRole === 'referent'">
+        <router-link to="/referent/notifications" class="nav-link" :class="{ active: isActive('/referent/notifications') }">
+          <i class="fas fa-bell"></i>
+          <span>Notifications</span>
+          <div class="notif-icon" v-if="notifCount > 0">
+            <span class="notif-count">{{ notifCount }}</span>
+          </div>
+        </router-link>
+        <router-link to="/referent/profil" class="nav-link" :class="{ active: isActive('/referent/profil') }"> 
+          <i class="fas fa-user"></i>
+          <span>Profil</span>
+        </router-link>
+        <router-link to="/referent/historique" class="nav-link" :class="{ active: isActive('/referent/historique') }">
+          <i class="fas fa-history"></i>
+          <span>Historique</span>
+        </router-link>
+      </template>
+
+      <!-- Déconnexion -->
       <div class="logout-container" @click="toggleDropdown">
         <div class="nav-link logout-link">
           <i class="fas fa-sign-out-alt"></i>
           <span>Déconnexion</span>
         </div>
-        <span class="user-email">adrien.defossez@univ-jfc.fr</span>
+        <!-- Affichage dynamique de l'e-mail -->
+        <span class="user-email">{{ userData.email }}</span>
         <!-- Menu déroulant (optionnel) -->
         <div v-if="dropdownVisible" class="dropdown-menu">
           <router-link to="/settings" class="dropdown-item">
@@ -44,13 +86,19 @@
   </nav>
 </template>
 
-
 <script setup>
-import { ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 // Simuler un nombre de notifications
 const notifCount = ref(3);
+
+// Données de l'utilisateur
+const userData = ref({
+  name: 'Adrien Defossez', // Valeur par défaut
+  email: 'adrien.defossez@univ-jfc.fr', // Valeur par défaut
+  profileImage: '', // Optionnel
+});
 
 // Gestion du menu déroulant
 const dropdownVisible = ref(false);
@@ -61,12 +109,60 @@ const toggleDropdown = () => {
 // Vérifier si un lien est actif
 const route = useRoute();
 const isActive = (path) => {
-  return route.path.startsWith(path);
+  return route.path === path;
 };
 
+// Récupérer le rôle de l'utilisateur
+const userRole = computed(() => {
+  // Supposons que le rôle est stocké dans la route ou dans un store
+  return route.path.startsWith('/directeur') ? 'directeur' : 
+         route.path.startsWith('/scolarite') ? 'scolarite' : 
+         route.path.startsWith('/referent') ? 'referent' : 
+         'etudiant';
+});
+
+// Mettre à jour userData en fonction du rôle
+watch(
+  () => userRole.value,
+  (newRole) => {
+    if (newRole === 'etudiant') {
+      userData.value = {
+        name: 'Ines Gribaa',
+        email: 'ines.gribaa@univ-jfc.fr',
+        profileImage: '',
+      };
+    } else if (newRole === 'referent') {
+      userData.value = {
+        name: 'Référent',
+        email: 'referent@univ-jfc.fr',
+        profileImage: '',
+      };
+    } else {
+      userData.value = {
+        name: 'Adrien Defossez',
+        email: 'adrien.defossez@univ-jfc.fr',
+        profileImage: '',
+      };
+    }
+  },
+  { immediate: true } // Exécuter immédiatement au chargement
+);
+
+// Rediriger vers l'accueil approprié
+const router = useRouter();
+const navigateToHome = () => {
+  if (userRole.value === 'etudiant') {
+    router.push('/etudiant/accueil');
+  } else if (userRole.value === 'referent') {
+    router.push('/referent/accueil');
+  } else {
+    router.push('/directeur/accueil');
+  }
+};
 </script>
 
 <style scoped>
+/* Styles globaux */
 .topbar {
   display: flex;
   align-items: center;
@@ -148,6 +244,7 @@ const isActive = (path) => {
   font-size: 0.65rem;
   color: rgba(255, 255, 255, 0.8);
   margin-top: -2px;
+  margin-left: 15px;
 }
 
 .logout-container {

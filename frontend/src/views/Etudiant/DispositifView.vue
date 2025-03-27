@@ -124,8 +124,6 @@
 </template>
 
 <script setup>
-// Cette vue est statique, aucune logique JavaScript n'est requise pour l'instant.
-import TopbarEtudiant from "@/components/TopbarEtudiant.vue";
 </script>
 
 <style scoped>

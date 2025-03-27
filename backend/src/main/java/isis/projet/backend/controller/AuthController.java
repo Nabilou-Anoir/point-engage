@@ -46,12 +46,12 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Le champ username est obligatoire.");
         }
 
-        // 🔹 Vérifier si le username est déjà pris
+        // Vérifier si le username est déjà pris
         if (utilisateurRepository.findByUsername(newUser.getUsername()).isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nom d'utilisateur déjà utilisé.");
         }
 
-        // 🔹 Déterminer le rôle à partir de l'email
+        // Déterminer le rôle à partir de l'email
         String email = newUser.getEmail().toLowerCase();
         String roleName;
 
@@ -75,10 +75,10 @@ public class AuthController {
 
         newUser.setRole(roleOpt.get());
 
-        // 🔹 Sauvegarde de l'utilisateur dans la base de données
+        //  Sauvegarde de l'utilisateur dans la base de données
         Utilisateur savedUser = utilisateurRepository.save(newUser);
 
-        // 🔹 Ajouter l'utilisateur dans la table correspondante à son rôle
+        //  Ajouter l'utilisateur dans la table correspondante à son rôle
         if ("ROLE_ETUDIANT".equals(roleName)) {
             Etudiant etudiant = new Etudiant();
             etudiant.setNom(newUser.getNom());
@@ -109,7 +109,7 @@ public class AuthController {
 
         Utilisateur user = userOpt.get();
 
-        // 📌 Vérification du mot de passe en clair (⚠️ Non sécurisé)
+
         if (!user.getPassword().equals(password)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mot de passe incorrect.");
         }
