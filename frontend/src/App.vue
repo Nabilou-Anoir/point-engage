@@ -1,10 +1,10 @@
 <template>
   <div id="app">
     <!-- Afficher le Topbar uniquement si on n'est pas sur la page Login -->
-    <Topbar v-if="showHeader" />
+    <TopbarEtudiant v-if="showHeader" />
     <div class="layout">
       <!-- Afficher le Sidebar uniquement si on n'est pas sur la page Login -->
-      <Sidebar v-if="showSidebar" />
+      <SidebarEtudiant v-if="showSidebar" />
       <!-- Zone de contenu : router-view -->
       <div class="main-content" :class="{ 'full-width': !showSidebar }">
         <router-view />
@@ -16,8 +16,8 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute } from "vue-router";
-import Sidebar from "@/components/Sidebar.vue";
-import Topbar from "@/components/Topbar.vue";
+import SidebarEtudiant from "@/components/SidebarEtudiant.vue";
+import TopbarEtudiant from "@/components/TopbarEtudiant.vue";
 
 // Récupérer la route active
 const route = useRoute();

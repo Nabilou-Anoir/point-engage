@@ -7,6 +7,8 @@ import LoginView from "@/views/LoginView.vue";
 import DashboardEtudiantView from "@/views/Etudiant/DashboardEtudiantView.vue";
 import DispositifView from "@/views/Etudiant/DispositifView.vue";
 import SaisirFicheView from "@/views/Etudiant/SaisirFicheView.vue";
+import HistoriqueFichesView from "@/views/Etudiant/HistoriqueFichesView.vue";
+import ProfilEtudiantView from "@/views/Etudiant/ProfilEtudiantView.vue";
 
 // Import des autres vues (directeur, étudiant, etc.)
 // import AccueilView from "@/views/DirecteurView/views/AccueilView.vue";
@@ -50,12 +52,8 @@ const routes = [
   {path: "/etudiant/accueil",name: "DashbordEtudiant", component: DashboardEtudiantView,},
   { path: "/dispositif", name: "Dispositif", component: DispositifView },
   { path: "/saisir-fiche", name: "SaisirFiche", component: SaisirFicheView},
-
-  // { path: "/historique-fiches", name: "HistoriqueFiches", component: HistoriqueFichesView
-  // },
-
-  //
-  // { path: "/profil", name: "ProfilEtudiant", component: ProfilEtudiantView },
+  { path: "/historique-fiches", name: "HistoriqueFiches", component: HistoriqueFichesView},
+  { path: "/etudiant/profil", name: "ProfilEtudiant", component: ProfilEtudiantView },
   //
   // { path: "/notifications-etudiant", name: "NotificationEtudiant", component: NotificationsEtudiantView },
 

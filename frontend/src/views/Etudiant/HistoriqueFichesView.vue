@@ -1,6 +1,13 @@
 <template>
   <div class="activities-container">
-    <!-- Barre de recherche et filtre -->
+    <h1>Historique des fiches</h1>
+
+    <!-- Affichage du nom de l'étudiant connecté -->
+    <p v-if="etudiant">
+      <strong>Étudiant connecté :</strong> {{ etudiant.nom }} {{ etudiant.prenom }}
+    </p>
+
+    <!-- Barre de recherche -->
     <div class="search-filter">
       <input
         type="text"
@@ -10,168 +17,235 @@
       />
     </div>
 
-    <!-- Tableau des activités -->
-    <div class="table-container">
+    <!-- Tableau de l'historique (avec pagination) -->
+    <div class="table-container" v-if="paginatedHistorique.length > 0">
       <table class="activities-table">
         <thead>
-          <tr>
-            <th>Activité</th>
-            <th>Date</th>
-            <th class="text-right">Statut</th>
-          </tr>
+        <tr>
+          <th>Activité</th>
+          <th>Date de Réalisation</th>
+          <th class="text-right">Statut</th>
+          <th class="text-right">Points</th>
+        </tr>
         </thead>
         <tbody>
-          <tr v-for="(activity, index) in filteredActivities" :key="index" class="table-row">
-            <td @click="showPopup(activity)" class="activity-name">{{ activity.name }}</td>
-            <td>{{ activity.date }}</td>
-            <td class="text-right">
-              <span v-if="activity.points" class="points">{{ activity.points }} points attribués</span>
-              <span v-else :class="getStatusClass(activity.status)">{{ activity.status }}</span>
-            </td>
-          </tr>
+        <tr
+          v-for="(item, index) in paginatedHistorique"
+          :key="`${item.id.idEtudiant}-${item.id.idAction}-${item.id.idSemestre}`"
+          class="table-row"
+        >
+          <td @click="showPopup(item)" class="activity-name">
+            {{ item.action ? item.action.nom : 'N/A' }}
+          </td>
+          <td>{{ formatDate(item.dateDebutParticipation) }}</td>
+          <td class="text-right">
+            <span v-if="item.statut === true" class="status-valid">Validé</span>
+            <span v-else-if="item.statut === false" class="status-pending">Refusé</span>
+            <span v-else class="status-default">En attente</span>
+          </td>
+          <td class="text-right">
+            <span class="points">{{ item.totalPoints || 0 }} pts</span>
+          </td>
+        </tr>
         </tbody>
       </table>
     </div>
+    <div v-else>
+      <p>Aucun historique disponible.</p>
+    </div>
 
     <!-- Pagination -->
-    <div class="pagination">
-      <button 
-        @click="prevPage" 
-        :disabled="currentPage === 1" 
+    <div class="pagination" v-if="totalPages > 1">
+      <button
+        @click="prevPage"
+        :disabled="currentPage === 1"
         class="pagination-button"
       >
         Précédent
       </button>
       <span class="page-indicator">Page {{ currentPage }} sur {{ totalPages }}</span>
-      <button 
-        @click="nextPage" 
-        :disabled="currentPage === totalPages" 
+      <button
+        @click="nextPage"
+        :disabled="currentPage === totalPages"
         class="pagination-button"
       >
         Suivant
       </button>
     </div>
 
-    <!-- Popup -->
-    
-<div v-if="selectedActivity" class="modal-overlay" @click="closePopup">
-  <div class="modal-content" @click.stop>
-    <h2>{{ selectedActivity.name }}</h2>
-    <p><strong>Date:</strong> {{ selectedActivity.date }}</p>
-    <p><strong>Statut:</strong> {{ selectedActivity.status || 'Points attribués: ' + selectedActivity.points }}</p>
-
-    <!-- Étapes en une seule ligne -->
-    <div class="steps-container">
-  <div class="step">
-    <div class="step-header">
-      <div class="step-number">1</div>
-      <div class="step-label">Fiche envoyée</div>
+    <!-- Popup de détail -->
+    <div v-if="selectedParticipation" class="modal-overlay" @click="closePopup">
+      <div class="modal-content" @click.stop>
+        <h2>
+          {{ selectedParticipation.action ? selectedParticipation.action.nom : 'Détails de la fiche' }}
+        </h2>
+        <p><strong>Date de Réalisation:</strong> {{ formatDate(selectedParticipation.dateDebutParticipation) }}</p>
+        <p>
+          <strong>Statut:</strong>
+          <span v-if="selectedParticipation.statut === true">Validé</span>
+          <span v-else-if="selectedParticipation.statut === false">Refusé</span>
+          <span v-else>En attente</span>
+        </p>
+        <p><strong>Points attribués:</strong> {{ selectedParticipation.totalPoints || 0 }}</p>
+        <!-- Description de l'action, si présente -->
+        <p v-if="selectedParticipation.action && selectedParticipation.action.description">
+          <strong>Description de l'action:</strong> {{ selectedParticipation.action.description }}
+        </p>
+        <!-- Description de la participation, si présente -->
+        <p v-if="selectedParticipation.descriptionParticipation">
+          <strong>Description de la participation:</strong> {{ selectedParticipation.descriptionParticipation }}
+        </p>
+        <button @click="closePopup" class="modal-close-button">Fermer</button>
+      </div>
     </div>
-    <div class="step-description">Votre fiche est bien partie ! Elle est en cours d’examen par votre référent.</div>
-  </div>
-  <div class="step-connector"></div>
-  <div class="step">
-    <div class="step-header">
-      <div class="step-number">2</div>
-      <div class="step-label">Validation en cours</div>
-    </div>
-    <div class="step-description">Votre référent analyse vos activités et peut ajouter des remarques si besoin.</div>
-  </div>
-  <div class="step-connector"></div>
-  <div class="step">
-    <div class="step-header">
-      <div class="step-number">3</div>
-      <div class="step-label">Transmission au directeur</div>
-    </div>
-    <div class="step-description">Félicitations ! Votre fiche a été validée et transmise au directeur pour l’attribution des points.</div>
-  </div>
-  <div class="step-connector"></div>
-  <div class="step">
-    <div class="step-header">
-      <div class="step-number">4</div>
-      <div class="step-label">Points attribués</div>
-    </div>
-    <div class="step-description">Votre engagement est reconnu ! Consultez vos points et poursuivez votre parcours.</div>
-  </div>
-</div>
-
-    <button @click="closePopup" class="modal-close-button">Fermer</button>
-  </div>
-</div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'ActivitiesView',
-  data() {
-    return {
-      activities: [
-        { name: 'Activité 1', date: '28/01/2025', points: '0.2' },
-        { name: 'Activité 2', date: '01/02/2025', points: '0.2' },
-        { name: 'Activité 3', date: '02/02/2025', status: 'Validé par le référent' },
-        { name: 'Activité 4', date: '05/02/2025', status: 'En attente de validation' },
-        // Ajoutez plus d'activités ici pour tester la pagination
-      ],
-      searchQuery: '',
-      currentPage: 1,
-      itemsPerPage: 3,
-      selectedActivity: null
-    };
-  },
-  computed: {
-    filteredActivities() {
-      return this.activities
-        .filter(activity =>
-          activity.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-        )
-        .slice((this.currentPage - 1) * this.itemsPerPage, this.currentPage * this.itemsPerPage);
-    },
-    totalPages() {
-      return Math.ceil(this.activities.length / this.itemsPerPage);
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+
+// États réactifs pour l'historique et l'étudiant
+const historique = ref([])
+const etudiant = ref(null)
+
+// Récupération de l'utilisateur connecté depuis le sessionStorage
+const loggedInUser = ref(null)
+if (sessionStorage.getItem('loggedInUser')) {
+  loggedInUser.value = JSON.parse(sessionStorage.getItem('loggedInUser'))
+} else {
+  console.log('Aucun utilisateur connecté trouvé dans le sessionStorage.')
+}
+
+// Endpoints API
+const ETUDIANT_BY_EMAIL_URL = 'http://localhost:8989/api/etudiants/byEmail?email='
+const PARTICIPES_SEARCH_URL = 'http://localhost:8989/api/participes/search/findByIdIdEtudiant'
+const ACTIONS_URL = 'http://localhost:8989/api/actions'
+const SEMESTRES_URL = 'http://localhost:8989/api/semestres'
+
+// États pour la recherche, la pagination et le popup
+const searchQuery = ref('')
+const currentPage = ref(1)
+const itemsPerPage = ref(5)
+const selectedParticipation = ref(null)
+
+// Fonction pour charger l'historique de l'étudiant connecté
+async function getHistorique() {
+  try {
+    if (!loggedInUser.value || !loggedInUser.value.email) {
+      console.log("L'utilisateur connecté n'a pas d'email.")
+      return
     }
-  },
-  methods: {
-    nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-      }
-    },
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-      }
-    },
-    getStatusClass(status) {
-      switch (status) {
-        case 'Validé par le référent':
-          return 'status-valid';
-        case 'En attente de validation':
-          return 'status-pending';
-        default:
-          return 'status-default';
-      }
-    },
-    showPopup(activity) {
-      this.selectedActivity = activity;
-    },
-    closePopup() {
-      this.selectedActivity = null;
+    // 1) Récupérer l'étudiant via son email
+    const etuResponse = await fetch(ETUDIANT_BY_EMAIL_URL + encodeURIComponent(loggedInUser.value.email))
+    if (!etuResponse.ok) {
+      console.log('Erreur lors de la récupération de l’étudiant :', etuResponse.statusText)
+      return
     }
+    const etudiantData = await etuResponse.json()
+    console.log("Données de l’étudiant récupérées :", etudiantData)
+    if (!etudiantData.idEtudiant) {
+      console.log("Aucun idEtudiant trouvé pour l'utilisateur connecté (", loggedInUser.value.email, ")")
+      return
+    }
+    etudiant.value = etudiantData
+
+    // 2) Récupérer les participations à partir de l'idEtudiant
+    const url = `${PARTICIPES_SEARCH_URL}?idEtudiant=${etudiantData.idEtudiant}`
+    console.log("URL de recherche des participations :", url)
+    const partResponse = await fetch(url)
+    if (!partResponse.ok) {
+      console.log('Erreur lors de la récupération des participations :', partResponse.statusText)
+      return
+    }
+    const partData = await partResponse.json()
+    console.log("Données brutes des participations :", partData)
+    const participations = partData._embedded && partData._embedded.participes
+      ? partData._embedded.participes
+      : []
+    if (participations.length === 0) {
+      console.log("Aucune participation trouvée pour cet étudiant.")
+    }
+
+    // 3) Pour chaque participation, charger les détails de l'action et du semestre
+    const fetchDetails = participations.map(async (item) => {
+      try {
+        const actionRes = await fetch(`${ACTIONS_URL}/${item.id.idAction}`)
+        if (actionRes.ok) {
+          item.action = await actionRes.json()
+        } else {
+          console.log('Erreur lors de la récupération de l\'action:', actionRes.statusText)
+        }
+        const semestreRes = await fetch(`${SEMESTRES_URL}/${item.id.idSemestre}`)
+        if (semestreRes.ok) {
+          item.semestre = await semestreRes.json()
+        } else {
+          console.log('Erreur lors de la récupération du semestre:', semestreRes.statusText)
+        }
+      } catch (err) {
+        console.error('❌ Erreur chargement des détails pour une participation :', err)
+      }
+      return item
+    })
+    const results = await Promise.all(fetchDetails)
+    console.log("Participations avec détails :", results)
+    historique.value = results
+  } catch (error) {
+    console.error("Erreur lors du chargement de l'historique :", error)
   }
-};
+}
+
+// Fonction pour formater une date
+function formatDate(dateStr) {
+  if (!dateStr) return 'N/A'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('fr-FR')
+}
+
+onMounted(getHistorique)
+
+// Filtrage des participations par nom d'activité
+const filteredHistorique = computed(() => {
+  if (!searchQuery.value.trim()) return historique.value
+  return historique.value.filter(item => {
+    const activityName = item.action && item.action.nom ? item.action.nom.toLowerCase() : ''
+    return activityName.includes(searchQuery.value.toLowerCase())
+  })
+})
+
+// Pagination
+const totalPages = computed(() => {
+  return Math.ceil(filteredHistorique.value.length / itemsPerPage.value)
+})
+
+const paginatedHistorique = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  return filteredHistorique.value.slice(start, start + itemsPerPage.value)
+})
+
+function nextPage() {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+function prevPage() {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+// Popup pour afficher le détail d'une participation
+function showPopup(item) {
+  selectedParticipation.value = item
+}
+
+function closePopup() {
+  selectedParticipation.value = null
+}
 </script>
 
 <style scoped>
-/* Styles globaux */
-body {
-  font-family: 'Inter', sans-serif;
-  background: #f4f4f9;
-  margin: 0;
-  padding: 0;
-}
-
-/* Conteneur principal */
+/* Styles inspirés du composant ActivitiesView */
 .activities-container {
   max-width: 1300px;
   margin: 40px auto;
@@ -182,7 +256,6 @@ body {
   animation: fadeIn 0.5s ease-in-out;
 }
 
-/* Barre de recherche */
 .search-filter {
   margin-bottom: 30px;
 }
@@ -204,7 +277,6 @@ body {
   outline: none;
 }
 
-/* Tableau */
 .table-container {
   overflow-x: auto;
   border-radius: 7px;
@@ -217,22 +289,21 @@ body {
   margin-bottom: 20px;
 }
 
-.activities-table th, .activities-table td {
+.activities-table th,
+.activities-table td {
   padding: 16px 20px;
   text-align: left;
   border-bottom: 1px solid #e0e0e0;
 }
 
 .activities-table th {
-  
   color: #666;
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.7rem;
 }
 
-.activities-table th.text-right,
-.activities-table td.text-right {
+.text-right {
   text-align: right;
 }
 
@@ -242,7 +313,6 @@ body {
 
 .activities-table tbody tr:hover {
   background-color: #f8f8f8;
- 
 }
 
 .activity-name {
@@ -252,40 +322,31 @@ body {
   text-decoration: underline;
 }
 
-/* Styles pour les statuts et points */
-.points {
-  color: #4CAF50;
-  font-weight: 500;
+.points,
+.status-valid,
+.status-pending,
+.status-default {
   padding: 6px 12px;
   border-radius: 7px;
-  background-color: #e8f5e9;
+  font-weight: 500;
 }
 
+.points,
 .status-valid {
   color: #4CAF50;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 7px;
   background-color: #e8f5e9;
 }
 
 .status-pending {
   color: #FFA000;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 7px;
   background-color: #fff3e0;
 }
 
 .status-default {
   color: #333;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 7px;
   background-color: #f5f5f5;
 }
 
-/* Pagination */
 .pagination {
   display: flex;
   justify-content: center;
@@ -328,12 +389,12 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.6); /* Fond plus sombre pour plus de contraste */
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(5px); /* Effet de flou pour l'arrière-plan */
+  backdrop-filter: blur(5px);
   animation: fadeIn 0.3s ease-in-out;
 }
 
@@ -369,74 +430,6 @@ body {
   color: #555;
 }
 
-.modal-content strong {
-  color: #333;
-}
-
-/* Étapes en une seule ligne */
-.steps-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-top: 30px;
-  position: relative;
-}
-
-.step {
-  text-align: center; /* Alignement à gauche */
-  position: relative;
-  flex: 1;
-  padding: 0 10px;
-}
-
-.step-header {
-  display: flex;
-  align-items: center; /* Alignement vertical des éléments */
-  gap: 10px; /* Espace entre le numéro et le titre */
-  margin-bottom: 10px;
-}
-
-.step-number {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background-color: #6A3FA0;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: 700;
-  font-size: 0.8rem;
-  box-shadow: 0 4px 10px rgba(106, 63, 160, 0.3);
-  transition: all 0.3s ease;
-  flex-shrink: 0; /* Empêche le numéro de rétrécir */
-}
-
-.step-label {
-  font-weight: 600;
-  color: #6A3FA0;
-  font-size: 0.8rem;
-  transition: color 0.3s ease;
-}
-
-.step-description {
-  font-size: 0.7rem;
-  color: #777;
-  line-height: 1.4;
-  margin-top: 10px; 
-}
-
-.step-connector {
-  flex: 1;
-  height: 2px;
-  background: #6A3FA0;
-  margin: 0 10px;
-  position: relative;
-  top: 20px;
-  opacity: 0.3;
-}
-
-/* Bouton de fermeture */
 .modal-close-button {
   padding: 12px 24px;
   border: none;
@@ -457,7 +450,6 @@ body {
   box-shadow: 0 6px 15px rgba(106, 63, 160, 0.4);
 }
 
-/* Animation */
 @keyframes fadeIn {
   from {
     opacity: 0;

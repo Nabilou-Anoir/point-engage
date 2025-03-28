@@ -2,8 +2,8 @@
   <div class="accueil-etudiant">
     <!-- En-tête -->
     <div class="header">
-      <h1 v-if="studentLoaded">Bonjour, {{ student.prenom }} {{ student.nom }} 👋</h1>
-      <h1 v-else>Bonjour ! 👋</h1>
+      <h1 v-if="studentLoaded">Bonjour, {{ student.prenom }} {{ student.nom }} </h1>
+      <h1 v-else>Bonjour !</h1>
       <p class="subtitle">Voici un aperçu de vos activités et participations.</p>
     </div>
 
