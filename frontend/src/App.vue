@@ -1,12 +1,18 @@
 <template>
   <div id="app">
-    <!-- Afficher le Topbar uniquement si on n'est pas sur la page Login -->
-    <TopbarEtudiant v-if="showHeader" />
+    <!-- Topbars dynamiques selon la route -->
+    <TopbarEtudiant v-if="isEtudiant && showLayout" />
+    <TopbarDirecteur v-else-if="isDirecteur && showLayout" />
+    <TopbarReferent v-else-if="isReferent && showLayout" />
+    <TopbarScolarite v-else-if="isScolarite && showLayout" />
+
     <div class="layout">
-      <!-- Afficher le Sidebar uniquement si on n'est pas sur la page Login -->
-      <SidebarEtudiant v-if="showSidebar" />
-      <!-- Zone de contenu : router-view -->
-      <div class="main-content" :class="{ 'full-width': !showSidebar }">
+      <!-- Sidebars uniquement pour Etudiant et Directeur -->
+      <SidebarEtudiant v-if="isEtudiant && showLayout" />
+      <SidebarDirecteur v-else-if="isDirecteur && showLayout" />
+
+      <!-- Contenu principal plein écran (si pas de sidebar) -->
+      <div class="main-content" :class="{ 'full-width': !hasSidebar }">
         <router-view />
       </div>
     </div>
@@ -16,18 +22,30 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+
+// Import des composants par acteur
 import SidebarEtudiant from "@/components/SidebarEtudiant.vue";
 import TopbarEtudiant from "@/components/TopbarEtudiant.vue";
 
-// Récupérer la route active
+import SidebarDirecteur from "@/components/Sidebar.vue";
+import TopbarDirecteur from "@/components/Topbar.vue";
+
+import TopbarReferent from "@/components/TopbarReferent.vue";
+import TopbarScolarite from "@/components/TopbarScolarite.vue";
+
 const route = useRoute();
 
-// Définir les noms de routes pour lesquelles Topbar/Sidebar ne doivent pas s'afficher
-const excludedRoutes = ["Login"]; // Ajoutez "Register" ou autres si nécessaire
+const excludedRoutes = ["Login", "Register"];
+const showLayout = computed(() => !excludedRoutes.includes(route.name));
 
-// Calculer si la Sidebar et le Topbar doivent être affichés
-const showSidebar = computed(() => !excludedRoutes.includes(route.name));
-const showHeader = computed(() => !excludedRoutes.includes(route.name));
+// Conditions par acteur selon ta configuration précise des routes
+const isEtudiant = computed(() => route.name.startsWith("AccueilEtudiant"));
+const isDirecteur = computed(() => route.name.startsWith("AccueilDirecteur"));
+const isReferent = computed(() => route.name.startsWith("AccueilReferent"));
+const isScolarite = computed(() => route.name.startsWith("AccueilScolarite"));
+
+// Sidebar uniquement pour Etudiant et Directeur
+const hasSidebar = computed(() => (isEtudiant.value || isDirecteur.value) && showLayout.value);
 </script>
 
 <style>
@@ -40,14 +58,12 @@ const showHeader = computed(() => !excludedRoutes.includes(route.name));
   flex-direction: column;
 }
 
-/* Layout principal : sidebar + contenu */
 .layout {
   display: flex;
   flex: 1;
-  margin-top: 80px; /* Espace sous la Topbar */
+  margin-top: 80px;
 }
 
-/* Style de la Sidebar */
 .sidebar {
   width: 250px;
   height: calc(100vh - 80px);
@@ -62,7 +78,6 @@ const showHeader = computed(() => !excludedRoutes.includes(route.name));
   padding: 10px;
 }
 
-/* Style de la zone de contenu */
 .main-content {
   flex: 1;
   margin-left: 250px;
@@ -71,7 +86,7 @@ const showHeader = computed(() => !excludedRoutes.includes(route.name));
   transition: margin-left 0.3s ease;
 }
 
-/* Plein écran lorsque la Sidebar n'est pas affichée */
+/* Plein écran dynamique quand il n'y a pas de Sidebar */
 .main-content.full-width {
   margin-left: 0;
 }

@@ -79,6 +79,7 @@ const navigateToDashboard = () => {
   flex-direction: column;
   padding: 20px;
   color: white;
+  top: 16%;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
