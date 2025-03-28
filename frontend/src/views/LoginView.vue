@@ -1,54 +1,71 @@
 <template>
   <div class="login-container">
-    <div class="form-box">
-      <h2 v-if="isLoginMode">Connexion</h2>
-      <h2 v-else>Inscription</h2>
+    <!-- En-tête -->
+    <div class="header">Application de gestion de point ingénieur engagé</div>
 
-      <form @submit.prevent="isLoginMode ? login() : register()">
-        <div class="input-group">
-          <label for="email"> Email :</label>
-          <input type="email" id="email" v-model="email" @input="detectRole" required placeholder="Entrez votre email..." />
+    <!-- Bloc principal -->
+    <div class="login-box">
+      <!-- Image / logo -->
+      <div class="login-left">
+        <img src="@/Images/logo2.jpg" alt="Logo Ingénieur Engagé" />
+      </div>
+
+      <!-- Formulaire -->
+      <div class="login-right">
+        <h2 class="login-title">
+          {{ isLoginMode ? "Connexion à l’espace Ingénieur Engagé" : "Créer un compte Ingénieur Engagé" }}
+        </h2>
+
+        <form @submit.prevent="isLoginMode ? login() : register()">
+          <input
+            type="email"
+            v-model="email"
+            @input="detectRole"
+            class="login-input"
+            placeholder="Utilisez votre adresse institutionnelle."
+            required
+          />
+
+          <div v-if="!isLoginMode">
+            <input type="text" v-model="username" class="login-input" placeholder="Nom d'utilisateur" required />
+            <input type="text" v-model="nom" class="login-input" placeholder="Nom" required />
+            <input type="text" v-model="prenom" class="login-input" placeholder="Prénom" required />
+            <input
+              v-if="detectedRole === 'ROLE_ETUDIANT'"
+              type="text"
+              v-model="promotion"
+              class="login-input"
+              placeholder="Promotion"
+              required
+            />
+          </div>
+
+          <input type="password" v-model="password" class="login-input" placeholder="Mot de passe" required />
+
+          <p class="role-detected">Rôle détecté : <strong>{{ detectedRole }}</strong></p>
+
+          <button type="submit" class="login-button">
+            {{ isLoginMode ? "Se connecter" : "S'inscrire" }}
+          </button>
+        </form>
+
+        <p v-if="errorMessage" class="error-msg">⚠️ {{ errorMessage }}</p>
+
+        <div class="login-links">
+          <router-link to="#" v-if="isLoginMode">Mot de passe oublié ?</router-link>
+          <span v-if="isLoginMode"> • </span>
+          <button class="link-button" @click="toggleMode">
+            {{ isLoginMode ? "Créer un compte" : "Déjà un compte ? Connectez-vous" }}
+          </button>
         </div>
+      </div>
+    </div>
 
-        <div v-if="!isLoginMode">
-          <div class="input-group">
-            <label for="username"> Nom d'utilisateur :</label>
-            <input type="text" id="username" v-model="username" required placeholder="Choisissez un nom d'utilisateur..." />
-          </div>
-
-          <div class="input-group">
-            <label for="nom">Nom :</label>
-            <input type="text" id="nom" v-model="nom" required placeholder="Entrez votre nom..." />
-          </div>
-
-          <div class="input-group">
-            <label for="prenom"> Prénom :</label>
-            <input type="text" id="prenom" v-model="prenom" required placeholder="Entrez votre prénom..." />
-          </div>
-
-          <div class="input-group" v-if="detectedRole === 'ROLE_ETUDIANT'">
-            <label for="promotion">🎓 Promotion :</label>
-            <input type="text" id="promotion" v-model="promotion" required placeholder="Entrez votre promotion..." />
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label for="password"> Mot de passe :</label>
-          <input type="password" id="password" v-model="password" required placeholder="Entrez votre mot de passe..." />
-        </div>
-
-        <p class="role-detected"> Rôle détecté : <strong>{{ detectedRole }}</strong></p>
-
-        <button class="btn primary-btn" type="submit">
-          {{ isLoginMode ? "🚀 Se connecter" : "✨ S'inscrire" }}
-        </button>
-      </form>
-
-      <p v-if="errorMessage" class="error-msg">⚠️ {{ errorMessage }}</p>
-
-      <button class="btn secondary-btn" @click="toggleMode">
-        {{ isLoginMode ? "🔄 Pas encore inscrit ? Créez un compte" : "🔙 Déjà un compte ? Connectez-vous" }}
-      </button>
+    <!-- Pied de page -->
+    <div class="footer">
+      📍 <a href="https://g.co/kgs/HXotdDv">Castres, 95 Rue Firmin Oulès, 81100 Castres</a> |
+      📞 <a href="tel:0563512401">0563512401</a> |
+      ✉️ <a href="mailto:isis@univ-jfc.fr">isis@univ-jfc.fr</a>
     </div>
   </div>
 </template>
@@ -67,29 +84,20 @@ export default {
     const nom = ref("");
     const prenom = ref("");
     const promotion = ref("");
-    const detectedRole = ref("ROLE_ETUDIANT"); // Valeur par défaut
+    const detectedRole = ref("ROLE_ETUDIANT");
     const isLoginMode = ref(true);
     const errorMessage = ref("");
     const router = useRouter();
 
-    // Détecter le rôle en fonction de l'email saisi
     const detectRole = () => {
-      if (!email.value) return;
-      const emailValue = email.value.toLowerCase();
-      if (emailValue === "adrien.defossez@univ-jfc.fr") {
-        detectedRole.value = "ROLE_DIRECTEUR";
-      } else if (emailValue === "scolarite-isis@univ-jfc.fr") {
-        detectedRole.value = "ROLE_SERVICE_SCOLARITE";
-      } else if (emailValue.endsWith("@etud.univ-jfc.fr")) {
-        detectedRole.value = "ROLE_ETUDIANT";
-      } else if (emailValue.endsWith("@univ-jfc.fr")) {
-        detectedRole.value = "ROLE_REFERENT";
-      } else {
-        detectedRole.value = "ROLE_ETUDIANT"; // Par défaut
-      }
+      const value = email.value.toLowerCase();
+      if (value === "adrien.defossez@univ-jfc.fr") detectedRole.value = "ROLE_DIRECTEUR";
+      else if (value === "scolarite-isis@univ-jfc.fr") detectedRole.value = "ROLE_SERVICE_SCOLARITE";
+      else if (value.endsWith("@etud.univ-jfc.fr")) detectedRole.value = "ROLE_ETUDIANT";
+      else if (value.endsWith("@univ-jfc.fr")) detectedRole.value = "ROLE_REFERENT";
+      else detectedRole.value = "ROLE_ETUDIANT";
     };
 
-    // Fonction de connexion
     const login = async () => {
       errorMessage.value = "";
       try {
@@ -100,13 +108,9 @@ export default {
 
         if (response.status === 200) {
           const user = response.data;
-          // Sauvegarder l'utilisateur dans le sessionStorage
           sessionStorage.setItem("loggedInUser", JSON.stringify(user));
-
-          // Selon la structure de l'objet user, le rôle peut être un objet ou une chaîne
           const role = typeof user.role === "object" ? user.role.name : user.role;
 
-          // Redirection en fonction du rôle
           switch (role) {
             case "ROLE_ETUDIANT":
               router.push("/etudiant/accueil");
@@ -129,7 +133,6 @@ export default {
       }
     };
 
-    // Fonction d'inscription (non modifiée)
     const register = async () => {
       errorMessage.value = "";
       try {
@@ -140,7 +143,7 @@ export default {
           nom: nom.value,
           prenom: prenom.value,
           promotion: detectedRole.value === "ROLE_ETUDIANT" ? promotion.value : null,
-          role: { name: detectedRole.value }
+          role: { name: detectedRole.value },
         });
 
         alert("Inscription réussie ! Connectez-vous maintenant.");
@@ -170,73 +173,168 @@ export default {
 </script>
 
 <style scoped>
-/* Vos styles ici (identiques à ceux que vous utilisez) */
+* {
+  box-sizing: border-box;
+}
+body {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: 'Arial', sans-serif;
+  background-color: #e74c3c; /* corrige la bande blanche */
+}
+
 .login-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  flex-direction: column;
 }
-.form-box {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 40px;
-  width: 400px;
-  border-radius: 15px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+
+/* En-tête */
+.header {
+  flex-shrink: 0;
+  width: 100%;
+  background-color: #e74c3c;
+  color: white;
+  padding: 25px 15px;
   text-align: center;
-  color: #333;
+  font-size: 20px;
+  font-weight: bold;
 }
-.input-group {
+
+/* Bloc principal */
+.login-box {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Partie gauche */
+.login-left {
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, #6a1b9a, #ff7043);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-left img {
+  max-width: 70%;
+  max-height: 70%;
+  object-fit: contain;
+}
+
+/* Partie droite */
+.login-right {
+  width: 50%;
+  height: 100%;
+  background-color: #5F4E9B;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  overflow-y: auto;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.login-input {
+  width: 100%;
+  padding: 12px;
   margin-bottom: 15px;
-  text-align: left;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
 }
-.input-group label {
-  font-weight: bold;
-  display: block;
-  margin-bottom: 5px;
-  color: #444;
-}
-.input-group input {
+
+.login-button {
   width: 100%;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
   padding: 12px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  font-size: 1rem;
-  color: #333;
-  background: #f9f9f9;
-  transition: 0.3s ease-in-out;
-}
-.input-group input:focus {
-  border-color: #6a11cb;
-  outline: none;
-  background: #fff;
-}
-.role-detected {
-  font-size: 1rem;
-  margin-bottom: 10px;
-  font-weight: bold;
-  color: #6a11cb;
-}
-.btn {
-  width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: bold;
+  border-radius: 5px;
   cursor: pointer;
+  font-size: 16px;
 }
-.primary-btn {
-  background: #4CAF50;
-  color: white;
+
+.login-button:hover {
+  background-color: #c0392b;
 }
-.secondary-btn {
-  background: #ff9800;
-  color: white;
+
+.role-detected {
+  color: yellow;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
+
 .error-msg {
   color: #ff4d4d;
   font-weight: bold;
   margin-top: 10px;
+}
+
+.login-links {
+  margin-top: 10px;
+  font-size: 12px;
+  color: white;
+}
+
+.login-links a,
+.link-button {
+  color: white;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Pied de page */
+.footer {
+  background-color: #fff;
+  padding: 10px;
+  font-size: 12px;
+  color: #555;
+  text-align: center;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .login-box {
+    flex-direction: column;
+  }
+
+  .login-left,
+  .login-right {
+    width: 100%;
+    height: 50%;
+  }
+
+  .login-left img {
+    max-width: 60%;
+  }
 }
 </style>
