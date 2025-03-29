@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 
+import LoginView from "@/views/LoginView.vue";
+
 import AccueilView from "@/views/Directeur/AccueilDirecteurView.vue";
 import NotificationsView from "@/views/Directeur/NotificationsView.vue";
 import SessionsView from "@/views/Directeur/SessionsView.vue";
@@ -25,6 +27,12 @@ import HistoriqueReferent from "@/views/Referent/HistoriqueReferent.vue";
 import ProfilReferentView from "@/views/Referent/ProfilReferentView.vue";
 
 const routes = [
+  // Route de la page de connexion (toujours affichée au lancement)
+  { path: "/login", name: "Login", component: LoginView },
+
+  // Rediriger la racine vers le login
+  { path: "/", redirect: "/login" },
+
   {
     path: "/directeur",
     name: "Directeur",
@@ -76,24 +84,6 @@ const routes = [
       { path: "profil", name: "ProfilReferent", component: ProfilReferentView },
       { path: "historique", name: "HistoriqueReferent", component: HistoriqueReferent },
     ],
-  },
-
-  {
-    path: "/",
-    redirect: () => {
-      const userRole = localStorage.getItem("userRole") || "directeur";
-
-      if (userRole === "etudiant") {
-        return { path: "/etudiant/accueil" };
-      } else if (userRole === "directeur") {
-        return { path: "/directeur/accueil" };
-      } else if (userRole === "scolarite") {
-        return { path: "/scolarite/accueil" };
-      }
-      else if (userRole === "referent") {
-        return { path: "/referent/accueil" };
-      }
-    },
   },
 ];
 

@@ -67,7 +67,7 @@ public class AuthController {
             roleName = "ROLE_ETUDIANT";
         }
 
-        // 🔹 Vérifier si le rôle existe
+        //  Vérifier si le rôle existe
         Optional<Role> roleOpt = roleRepository.findByName(roleName);
         if (roleOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Rôle non trouvé.");

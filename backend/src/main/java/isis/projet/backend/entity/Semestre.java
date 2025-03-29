@@ -35,6 +35,9 @@ public class Semestre {
     @Column(name = "nbSemestre")
     private Integer nbSemestre;
 
+    @Column(name = "anneeUniversitaire")
+    private  Date anneeUniversitaire;
+
     /**
      * Un semestre peut regrouper plusieurs participations.
      * Ce côté est le "managed" pour la relation semestre-participations.
