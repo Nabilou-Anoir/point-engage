@@ -2,15 +2,8 @@
   <div class="referent-view">
     <!-- Barre de recherche et filtre -->
     <div class="search-and-filter">
-      <!-- Barre de recherche -->
-      <input
-        type="text"
-        v-model="searchQuery"
-        placeholder="Rechercher un élève..."
-        class="search-input"
-      />
+      <input v-model="searchQuery" placeholder="Rechercher un élève..." class="search-input" />
 
-      <!-- Filtre par type d'engagement -->
       <select v-model="selectedFilter" class="filter-select">
         <option value="">Tous les types d'engagement</option>
         <option value="Climat-Environnement">Climat-Environnement</option>
@@ -18,7 +11,6 @@
         <option value="Diversité">Diversité</option>
       </select>
 
-      <!-- Filtre par promotion -->
       <select v-model="selectedPromotion" class="filter-select">
         <option value="">Toutes les promotions</option>
         <option v-for="promotion in availablePromotions" :key="promotion" :value="promotion">
@@ -27,7 +19,6 @@
       </select>
     </div>
 
-    <!-- Conteneur du tableau avec bordures arrondies -->
     <div class="table-container">
       <table class="students-table">
         <thead>
@@ -43,7 +34,6 @@
           <tr v-for="(student, index) in paginatedStudents" :key="index">
             <td @click="openStudentModal(student)">
               {{ student.name }}
-              <!-- Icône de message devant le nom -->
               <i class="fas fa-envelope message-icon" @click.stop="sendEmail(student)"></i>
             </td>
             <td class="promotion-cell">{{ student.promotion }}</td>
@@ -57,17 +47,11 @@
       </table>
     </div>
 
-    <!-- Pagination moderne -->
     <div class="pagination">
-      <button
-        @click="previousPage"
-        :disabled="currentPage === 1"
-        class="pagination-button prev-next"
-      >
-        <i class="fas fa-chevron-left"></i> <!-- Icône pour "Précédent" -->
+      <button @click="previousPage" :disabled="currentPage === 1" class="pagination-button prev-next">
+        <i class="fas fa-chevron-left"></i>
       </button>
 
-      <!-- Numéros de page -->
       <div class="page-numbers">
         <button
           v-for="page in totalPages"
@@ -80,16 +64,12 @@
         </button>
       </div>
 
-      <button
-        @click="nextPage"
-        :disabled="currentPage === totalPages"
-        class="pagination-button prev-next"
-      >
-        <i class="fas fa-chevron-right"></i> <!-- Icône pour "Suivant" -->
+      <button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-button prev-next">
+        <i class="fas fa-chevron-right"></i>
       </button>
     </div>
 
-    <!-- Popup pour afficher la fiche de l'étudiant -->
+    <!-- Modale Détail -->
     <div v-if="isModalOpen" class="modal-overlay">
       <div class="modal-content">
         <span class="close-modal" @click="closeModal">&times;</span>
@@ -136,12 +116,12 @@
       </div>
     </div>
 
-    <!-- Nouvelle modale pour "Choisir" -->
+    <!-- Modale Choix du référent -->
     <div v-if="isChooseModalOpen" class="modal-overlay">
       <div class="modal-content">
         <span class="close-modal" @click="closeChooseModal">&times;</span>
         <div class="modal-header">
-          <h2>Référance</h2>
+          <h2>Référence</h2>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -163,55 +143,72 @@
 </template>
 
 <script>
-
-import { students, availablePromotions } from '../../constante/students';
+import axios from 'axios';
 
 export default {
   data() {
     return {
-      students, // Utilisez les étudiants importés
+      students: [],
       searchQuery: '',
       selectedFilter: '',
-      selectedPromotion: '', // Nouveau filtre de promotion
-      availablePromotions, // Utilisez les promotions disponibles importées
+      selectedPromotion: '',
+      availablePromotions: [],
       currentPage: 1,
       itemsPerPage: 5,
       isModalOpen: false,
-      isChooseModalOpen: false, // Nouvel état pour la modale "Choisir"
+      isChooseModalOpen: false,
       selectedStudent: null,
       referentEmail: '',
       referentName: '',
     };
   },
   computed: {
-    // Filtrage des élèves en fonction de la recherche, du filtre et de la promotion
     filteredStudents() {
       return this.students.filter((student) => {
-        const matchesSearch = student.name
-          .toLowerCase()
-          .includes(this.searchQuery.toLowerCase());
-        const matchesFilter = this.selectedFilter
-          ? student.engagementType === this.selectedFilter
-          : true;
-        const matchesPromotion = this.selectedPromotion
-          ? student.promotion === this.selectedPromotion
-          : true;
+        const matchesSearch = student.name.toLowerCase().includes(this.searchQuery.toLowerCase());
+        const matchesFilter = this.selectedFilter ? student.engagementType === this.selectedFilter : true;
+        const matchesPromotion = this.selectedPromotion ? student.promotion === this.selectedPromotion : true;
         return matchesSearch && matchesFilter && matchesPromotion;
       });
     },
-    // Pagination des élèves filtrés
     paginatedStudents() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return this.filteredStudents.slice(start, end);
     },
-    // Calcul du nombre total de pages
     totalPages() {
       return Math.ceil(this.filteredStudents.length / this.itemsPerPage);
     },
   },
+  async mounted() {
+    const participationsRes = await axios.get('/api/participes');
+    const participations = participationsRes.data._embedded?.participes || [];
+
+    const pending = participations.filter(p => p.statut === false);
+
+    const studentList = await Promise.all(pending.map(async (p) => {
+      const [etudiant, action, semestre] = await Promise.all([
+        axios.get(p._links.etudiant.href),
+        axios.get(p._links.action.href),
+        axios.get(p._links.semestre.href)
+      ]);
+
+      return {
+        name: etudiant.data.prenom + ' ' + etudiant.data.nom,
+        email: etudiant.data.email,
+        promotion: etudiant.data.promotion,
+        engagementType: action.data.referentiel?.nom || 'N/A',
+        actionType: action.data.nom,
+        summary: p.descriptionParticipation,
+        period: this.formatDate(semestre.data.dateDebutSemestre) + ' - ' + this.formatDate(semestre.data.dateFinSemestre),
+        description: p.descriptionParticipation,
+      };
+    }));
+
+    this.students = studentList;
+    this.availablePromotions = [...new Set(studentList.map(s => s.promotion))];
+  },
   methods: {
-    // Envoyer un e-mail à l'étudiant
     sendEmail(student) {
       if (student.email) {
         window.location.href = `mailto:${student.email}`;
@@ -219,58 +216,47 @@ export default {
         alert("Aucune adresse e-mail trouvée pour cet étudiant.");
       }
     },
-    // Ouvrir la popup avec les détails de l'étudiant
     openStudentModal(student) {
       this.selectedStudent = student;
       this.isModalOpen = true;
     },
-    // Fermer la popup
     closeModal() {
       this.isModalOpen = false;
     },
-    // Modifier le type d'engagement
     editEngagementType() {
       alert('Modifier le type d\'engagement');
     },
-    // Modifier le type d'action
     editActionType() {
       alert('Modifier le type d\'action');
     },
-    // Ouvrir la modale "Choisir"
     openChooseModal(student) {
       this.selectedStudent = student;
       this.isChooseModalOpen = true;
     },
-    // Fermer la modale "Choisir"
     closeChooseModal() {
       this.isChooseModalOpen = false;
     },
-    // Confirmer le choix du référent
     confirmReferent() {
       if (this.referentEmail && this.referentName) {
-        console.log('Référent choisi:', this.referentEmail, this.referentName);
         alert(`Référent ${this.referentName} (${this.referentEmail}) choisi pour ${this.selectedStudent.name}.`);
         this.closeChooseModal();
       } else {
         alert('Veuillez remplir tous les champs.');
       }
     },
-    // Aller à la page précédente
     previousPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-      }
+      if (this.currentPage > 1) this.currentPage--;
     },
-    // Aller à la page suivante
     nextPage() {
-      if (this.currentPage < this.totalPages) {
-        this.currentPage++;
-      }
+      if (this.currentPage < this.totalPages) this.currentPage++;
     },
-    // Aller à une page spécifique
     goToPage(page) {
       this.currentPage = page;
     },
+    formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short' });
+    }
   },
 };
 </script>
