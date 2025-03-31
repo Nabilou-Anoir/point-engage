@@ -39,10 +39,14 @@ const excludedRoutes = ["Login", "Register"];
 const showLayout = computed(() => !excludedRoutes.includes(route.name));
 
 // Conditions par acteur selon ta configuration précise des routes
-const isEtudiant = computed(() => route.name.startsWith("AccueilEtudiant"));
-const isDirecteur = computed(() => route.name.startsWith("AccueilDirecteur"));
-const isReferent = computed(() => route.name.startsWith("AccueilReferent"));
-const isScolarite = computed(() => route.name.startsWith("AccueilScolarite"));
+const isEtudiant = computed(() => route.path.startsWith("/etudiant"));
+const isDirecteur = computed(() => route.path.startsWith("/directeur"));
+const isReferent = computed(() => route.path.startsWith("/referent"));
+const isScolarite = computed(() => route.path.startsWith("/scolarite"));
+
+// const isDirecteur = computed(() => route.name.startsWith("AccueilDirecteur"));
+// const isReferent = computed(() => route.name.startsWith("AccueilReferent"));
+// const isScolarite = computed(() => route.name.startsWith("AccueilScolarite"));
 
 // Sidebar uniquement pour Etudiant et Directeur
 const hasSidebar = computed(() => (isEtudiant.value || isDirecteur.value) && showLayout.value);

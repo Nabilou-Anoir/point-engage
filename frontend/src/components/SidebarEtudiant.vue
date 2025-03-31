@@ -7,8 +7,7 @@
         <span v-else>{{ userInitials }}</span>
       </div>
       <div class="user-details">
-        <h3 class="user-name">{{ userData.name }}</h3>
-        <!-- Clic sur l'email redirige vers le Dashboard -->
+        <h3 class="user-name">{{ fullName }}</h3>
         <p class="user-email" @click.stop="navigateToDashboard">{{ userData.email }}</p>
       </div>
     </div>
@@ -36,9 +35,9 @@ import { useRoute, useRouter } from 'vue-router';
 const route = useRoute();
 const router = useRouter();
 
-// Récupérer les données utilisateur depuis le sessionStorage
 const userData = ref({
-  name: '',
+  nom: '',
+  prenom: '',
   email: '',
   profileImage: '',
   role: ''
@@ -47,27 +46,43 @@ const userData = ref({
 onMounted(() => {
   const storedUser = sessionStorage.getItem('loggedInUser');
   if (storedUser) {
-    userData.value = JSON.parse(storedUser);
+    const user = JSON.parse(storedUser);
+    if (user.etudiant) {
+      userData.value = {
+        nom: user.etudiant.nom,
+        prenom: user.etudiant.prenom,
+        email: user.etudiant.email,
+        profileImage: user.profileImage || '',
+        role: 'etudiant'
+      };
+    } else {
+      userData.value = {
+        nom: user.nom || '',
+        prenom: user.prenom || '',
+        email: user.email || '',
+        profileImage: user.profileImage || '',
+        role: user.role || ''
+      };
+    }
   }
 });
 
-// Calculer les initiales de l'utilisateur
-const userInitials = computed(() => {
-  if (!userData.value.name) return '';
-  return userData.value.name.split(' ').map(n => n[0]).join('');
+const fullName = computed(() => {
+  return `${userData.value.nom} ${userData.value.prenom}`.trim();
 });
 
-// Menu latéral pour l'étudiant
+const userInitials = computed(() => {
+  const { nom, prenom } = userData.value;
+  return `${prenom?.[0] || ''}${nom?.[0] || ''}`.toUpperCase();
+});
+
 const menuItems = ref([
-  { path: '/saisir-fiche', text: 'Saisir une fiche', icon: 'fas fa-file-upload' },
-  { path: '/historique-fiches', text: 'Consulter l’historique des fiches', icon: 'fas fa-history' },
+  { path: '/etudiant/saisir-fiche', text: 'Saisir une fiche', icon: 'fas fa-file-upload' },
+  { path: '/etudiant/historique-fiches', text: 'Consulter l’historique des fiches', icon: 'fas fa-history' }
 ]);
 
 const isActive = (path) => route.path === path;
-
-const navigateToDashboard = () => {
-  router.push('/etudiant/accueil');
-};
+const navigateToDashboard = () => router.push('/etudiant/accueil');
 </script>
 
 <style scoped>

@@ -16,9 +16,9 @@ import PointCommuleView from "@/views/Directeur/PointCommuleView.vue";
 import DashboardEtudiantView from "@/views/Etudiant/DashboardEtudiantView.vue";
 import SaisirFicheView from "@/views/Etudiant/SaisirFicheView.vue";
 import HistoriqueFichesView from "@/views/Etudiant/HistoriqueFichesView.vue";
-import ProposerActiviteView from "@/views/Etudiant/ProposerActiviteView.vue";
 import ProfilEtudiantView from "@/views/Etudiant/ProfilEtudiantView.vue";
 import NotificationsEtudiantView from "@/views/Etudiant/NotificationsView.vue";
+import DispositifView from "@/views/Etudiant/DispositifView.vue";
 
 import ServiceScolarite from "@/views/ServiceScolarite/ServiceScolarite.vue";
 
@@ -59,9 +59,10 @@ const routes = [
       { path: "accueil", name: "AccueilEtudiant", component: DashboardEtudiantView },
       { path: "saisir-fiche", name: "SaisirFiche", component: SaisirFicheView },
       { path: "historique-fiches", name: "HistoriqueFiches", component: HistoriqueFichesView },
-      { path: "proposer-activite", name: "ProposerActivite", component: ProposerActiviteView },
       { path: "profil", name: "ProfilEtudiant", component: ProfilEtudiantView },
       { path: "notifications", name: "NotificationsEtudiant", component: NotificationsEtudiantView },
+      { path: "dispositif", name: "DispositifEtudiant", component: DispositifView },
+
     ],
   },
 

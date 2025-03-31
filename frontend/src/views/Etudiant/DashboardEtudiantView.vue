@@ -117,7 +117,7 @@ onMounted(async () => {
 
 // Fonction de navigation vers la vue Dispositif
 const navigateToDispositif = () => {
-  router.push('/dispositif');
+  router.push('/etudiant/dispositif');
 };
 </script>
 

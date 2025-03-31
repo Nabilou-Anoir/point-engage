@@ -2,12 +2,10 @@
   <div class="activities-container">
     <h1>Historique des fiches</h1>
 
-    <!-- Affichage du nom de l'étudiant connecté -->
     <p v-if="etudiant">
-      <strong>Étudiant connecté :</strong> {{ etudiant.nom }} {{ etudiant.prenom }}
+      <strong>Etudiant connecté :</strong> {{ etudiant.nom }} {{ etudiant.prenom }}
     </p>
 
-    <!-- Barre de recherche -->
     <div class="search-filter">
       <input
         type="text"
@@ -17,7 +15,6 @@
       />
     </div>
 
-    <!-- Tableau de l'historique (avec pagination) -->
     <div class="table-container" v-if="paginatedHistorique.length > 0">
       <table class="activities-table">
         <thead>
@@ -26,6 +23,7 @@
           <th>Date de Réalisation</th>
           <th class="text-right">Statut</th>
           <th class="text-right">Points</th>
+          <th class="text-right">Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -34,9 +32,7 @@
           :key="`${item.id.idEtudiant}-${item.id.idAction}-${item.id.idSemestre}`"
           class="table-row"
         >
-          <td @click="showPopup(item)" class="activity-name">
-            {{ item.action ? item.action.nom : 'N/A' }}
-          </td>
+          <td @click="showPopup(item)" class="activity-name">{{ item.action?.nom || 'N/A' }}</td>
           <td>{{ formatDate(item.dateDebutParticipation) }}</td>
           <td class="text-right">
             <span v-if="item.statut === true" class="status-valid">Validé</span>
@@ -46,206 +42,95 @@
           <td class="text-right">
             <span class="points">{{ item.totalPoints || 0 }} pts</span>
           </td>
+          <td class="text-right">
+            <button class="btn-suivre" @click="showSuiviPopup(item)">Suivre</button>
+          </td>
         </tr>
         </tbody>
       </table>
     </div>
-    <div v-else>
-      <p>Aucun historique disponible.</p>
-    </div>
+    <div v-else><p>Aucun historique disponible.</p></div>
 
-    <!-- Pagination -->
     <div class="pagination" v-if="totalPages > 1">
-      <button
-        @click="prevPage"
-        :disabled="currentPage === 1"
-        class="pagination-button"
-      >
-        Précédent
-      </button>
+      <button @click="prevPage" :disabled="currentPage === 1" class="pagination-button">Précédent</button>
       <span class="page-indicator">Page {{ currentPage }} sur {{ totalPages }}</span>
-      <button
-        @click="nextPage"
-        :disabled="currentPage === totalPages"
-        class="pagination-button"
-      >
-        Suivant
-      </button>
+      <button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-button">Suivant</button>
     </div>
 
-    <!-- Popup de détail -->
-    <div v-if="selectedParticipation" class="modal-overlay" @click="closePopup">
-      <div class="modal-content" @click.stop>
-        <h2>
-          {{ selectedParticipation.action ? selectedParticipation.action.nom : 'Détails de la fiche' }}
-        </h2>
-        <p><strong>Date de Réalisation:</strong> {{ formatDate(selectedParticipation.dateDebutParticipation) }}</p>
-        <p>
-          <strong>Statut:</strong>
-          <span v-if="selectedParticipation.statut === true">Validé</span>
-          <span v-else-if="selectedParticipation.statut === false">Refusé</span>
-          <span v-else>En attente</span>
-        </p>
-        <p><strong>Points attribués:</strong> {{ selectedParticipation.totalPoints || 0 }}</p>
-        <!-- Description de l'action, si présente -->
-        <p v-if="selectedParticipation.action && selectedParticipation.action.description">
-          <strong>Description de l'action:</strong> {{ selectedParticipation.action.description }}
-        </p>
-        <!-- Description de la participation, si présente -->
-        <p v-if="selectedParticipation.descriptionParticipation">
-          <strong>Description de la participation:</strong> {{ selectedParticipation.descriptionParticipation }}
-        </p>
-        <button @click="closePopup" class="modal-close-button">Fermer</button>
-      </div>
-    </div>
+    <SuiviFichePopup
+      :visible="suiviVisible"
+      :participationData="selectedSuivi"
+      @close="suiviVisible = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue';
+import SuiviFichePopup from '@/components/SuiviFichePopup.vue';
 
-// États réactifs pour l'historique et l'étudiant
-const historique = ref([])
-const etudiant = ref(null)
+const historique = ref([]);
+const etudiant = ref(null);
+const searchQuery = ref('');
+const currentPage = ref(1);
+const itemsPerPage = ref(5);
+const selectedSuivi = ref(null);
+const suiviVisible = ref(false);
 
-// Récupération de l'utilisateur connecté depuis le sessionStorage
-const loggedInUser = ref(null)
-if (sessionStorage.getItem('loggedInUser')) {
-  loggedInUser.value = JSON.parse(sessionStorage.getItem('loggedInUser'))
-} else {
-  console.log('Aucun utilisateur connecté trouvé dans le sessionStorage.')
-}
+const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
 
-// Endpoints API
-const ETUDIANT_BY_EMAIL_URL = 'http://localhost:8989/api/etudiants/byEmail?email='
-const PARTICIPES_SEARCH_URL = 'http://localhost:8989/api/participes/search/findByIdIdEtudiant'
-const ACTIONS_URL = 'http://localhost:8989/api/actions'
-const SEMESTRES_URL = 'http://localhost:8989/api/semestres'
-
-// États pour la recherche, la pagination et le popup
-const searchQuery = ref('')
-const currentPage = ref(1)
-const itemsPerPage = ref(5)
-const selectedParticipation = ref(null)
-
-// Fonction pour charger l'historique de l'étudiant connecté
 async function getHistorique() {
-  try {
-    if (!loggedInUser.value || !loggedInUser.value.email) {
-      console.log("L'utilisateur connecté n'a pas d'email.")
-      return
-    }
-    // 1) Récupérer l'étudiant via son email
-    const etuResponse = await fetch(ETUDIANT_BY_EMAIL_URL + encodeURIComponent(loggedInUser.value.email))
-    if (!etuResponse.ok) {
-      console.log('Erreur lors de la récupération de l’étudiant :', etuResponse.statusText)
-      return
-    }
-    const etudiantData = await etuResponse.json()
-    console.log("Données de l’étudiant récupérées :", etudiantData)
-    if (!etudiantData.idEtudiant) {
-      console.log("Aucun idEtudiant trouvé pour l'utilisateur connecté (", loggedInUser.value.email, ")")
-      return
-    }
-    etudiant.value = etudiantData
+  if (!loggedInUser?.email) return;
+  const etuRes = await fetch(`http://localhost:8989/api/etudiants/byEmail?email=${loggedInUser.email}`);
+  const etudiantData = await etuRes.json();
+  etudiant.value = etudiantData;
 
-    // 2) Récupérer les participations à partir de l'idEtudiant
-    const url = `${PARTICIPES_SEARCH_URL}?idEtudiant=${etudiantData.idEtudiant}`
-    console.log("URL de recherche des participations :", url)
-    const partResponse = await fetch(url)
-    if (!partResponse.ok) {
-      console.log('Erreur lors de la récupération des participations :', partResponse.statusText)
-      return
-    }
-    const partData = await partResponse.json()
-    console.log("Données brutes des participations :", partData)
-    const participations = partData._embedded && partData._embedded.participes
-      ? partData._embedded.participes
-      : []
-    if (participations.length === 0) {
-      console.log("Aucune participation trouvée pour cet étudiant.")
-    }
+  const partRes = await fetch(`http://localhost:8989/api/participes/search/findByIdIdEtudiant?idEtudiant=${etudiantData.idEtudiant}`);
+  const data = await partRes.json();
+  const participations = data._embedded?.participes || [];
 
-    // 3) Pour chaque participation, charger les détails de l'action et du semestre
-    const fetchDetails = participations.map(async (item) => {
-      try {
-        const actionRes = await fetch(`${ACTIONS_URL}/${item.id.idAction}`)
-        if (actionRes.ok) {
-          item.action = await actionRes.json()
-        } else {
-          console.log('Erreur lors de la récupération de l\'action:', actionRes.statusText)
-        }
-        const semestreRes = await fetch(`${SEMESTRES_URL}/${item.id.idSemestre}`)
-        if (semestreRes.ok) {
-          item.semestre = await semestreRes.json()
-        } else {
-          console.log('Erreur lors de la récupération du semestre:', semestreRes.statusText)
-        }
-      } catch (err) {
-        console.error('❌ Erreur chargement des détails pour une participation :', err)
-      }
-      return item
-    })
-    const results = await Promise.all(fetchDetails)
-    console.log("Participations avec détails :", results)
-    historique.value = results
-  } catch (error) {
-    console.error("Erreur lors du chargement de l'historique :", error)
+  for (const item of participations) {
+    const actionRes = await fetch(`http://localhost:8989/api/actions/${item.id.idAction}`);
+    const semRes = await fetch(`http://localhost:8989/api/semestres/${item.id.idSemestre}`);
+    item.action = await actionRes.json();
+    item.semestre = await semRes.json();
   }
+  historique.value = participations;
 }
 
-// Fonction pour formater une date
 function formatDate(dateStr) {
-  if (!dateStr) return 'N/A'
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('fr-FR')
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('fr-FR');
 }
 
-onMounted(getHistorique)
-
-// Filtrage des participations par nom d'activité
 const filteredHistorique = computed(() => {
-  if (!searchQuery.value.trim()) return historique.value
-  return historique.value.filter(item => {
-    const activityName = item.action && item.action.nom ? item.action.nom.toLowerCase() : ''
-    return activityName.includes(searchQuery.value.toLowerCase())
-  })
-})
+  return !searchQuery.value
+    ? historique.value
+    : historique.value.filter((item) => item.action?.nom?.toLowerCase().includes(searchQuery.value.toLowerCase()));
+});
 
-// Pagination
-const totalPages = computed(() => {
-  return Math.ceil(filteredHistorique.value.length / itemsPerPage.value)
-})
-
+const totalPages = computed(() => Math.ceil(filteredHistorique.value.length / itemsPerPage.value));
 const paginatedHistorique = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  return filteredHistorique.value.slice(start, start + itemsPerPage.value)
-})
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  return filteredHistorique.value.slice(start, start + itemsPerPage.value);
+});
 
 function nextPage() {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
+  if (currentPage.value < totalPages.value) currentPage.value++;
 }
-
 function prevPage() {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
+  if (currentPage.value > 1) currentPage.value--;
 }
 
-// Popup pour afficher le détail d'une participation
-function showPopup(item) {
-  selectedParticipation.value = item
+function showSuiviPopup(item) {
+  selectedSuivi.value = item;
+  suiviVisible.value = true;
 }
 
-function closePopup() {
-  selectedParticipation.value = null
-}
+onMounted(getHistorique);
 </script>
 
 <style scoped>
-/* Styles inspirés du composant ActivitiesView */
 .activities-container {
   max-width: 1300px;
   margin: 40px auto;
