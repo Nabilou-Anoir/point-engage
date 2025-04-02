@@ -180,11 +180,12 @@ const deleteActivity = (index) => {
 
 .sidebar {
   width: 250px;
-  height: 550px;
+  height: 600px;
   background-color: rgb(248, 243, 253);
   padding: 20px;
   display: flex;
   flex-direction: column;
+  margin-top: 39.5px;
 }
 
 .sidebar-button {
