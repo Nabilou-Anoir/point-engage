@@ -1,24 +1,19 @@
 <template>
   <div class="referent-view">
-    <!-- Barre de recherche et filtre -->
+    <!-- Barre de recherche et filtres -->
     <div class="search-and-filter">
-      <input v-model="searchQuery" placeholder="Rechercher un élève..." class="search-input" />
-
+      <input type="text" v-model="searchQuery" placeholder="Rechercher un élève..." class="search-input" />
       <select v-model="selectedFilter" class="filter-select">
         <option value="">Tous les types d'engagement</option>
-        <option value="Climat-Environnement">Climat-Environnement</option>
-        <option value="Ecole">Ecole</option>
-        <option value="Diversité">Diversité</option>
+        <option v-for="ref in referents" :key="ref.idReferent" :value="ref.nom">{{ ref.nom }}</option>
       </select>
-
       <select v-model="selectedPromotion" class="filter-select">
         <option value="">Toutes les promotions</option>
-        <option v-for="promotion in availablePromotions" :key="promotion" :value="promotion">
-          {{ promotion }}
-        </option>
+        <option v-for="promo in availablePromotions" :key="promo">{{ promo }}</option>
       </select>
     </div>
 
+    <!-- Tableau -->
     <div class="table-container">
       <table class="students-table">
         <thead>
@@ -31,45 +26,31 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(student, index) in paginatedStudents" :key="index">
-            <td @click="openStudentModal(student)">
+          <tr v-for="student in paginatedStudents" :key="student.etudiantId">
+            <td @click="openStudentModal(student)" style="cursor: pointer; color: blue">
               {{ student.name }}
-              <i class="fas fa-envelope message-icon" @click.stop="sendEmail(student)"></i>
             </td>
-            <td class="promotion-cell">{{ student.promotion }}</td>
-            <td class="engagement-cell">{{ student.engagementType }}</td>
-            <td class="summary-cell">{{ student.summary }}</td>
+            <td>{{ student.promotion }}</td>
+            <td>{{ student.engagementType }}</td>
+            <td>{{ student.summary }}</td>
             <td>
-              <button @click="openChooseModal(student)">Choisir</button>
+              <button @click="openChooseModal(student)">Assigner</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
+    <!-- Pagination -->
     <div class="pagination">
-      <button @click="previousPage" :disabled="currentPage === 1" class="pagination-button prev-next">
-        <i class="fas fa-chevron-left"></i>
+      <button @click="previousPage" :disabled="currentPage === 1">&lt;</button>
+      <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="{ active: currentPage === page }">
+        {{ page }}
       </button>
-
-      <div class="page-numbers">
-        <button
-          v-for="page in totalPages"
-          :key="page"
-          @click="goToPage(page)"
-          :class="{ active: currentPage === page }"
-          class="page-number"
-        >
-          {{ page }}
-        </button>
-      </div>
-
-      <button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-button prev-next">
-        <i class="fas fa-chevron-right"></i>
-      </button>
+      <button @click="nextPage" :disabled="currentPage === totalPages">&gt;</button>
     </div>
 
-    <!-- Modale Détail -->
+    <!-- Modale Détails -->
     <div v-if="isModalOpen" class="modal-overlay">
       <div class="modal-content">
         <span class="close-modal" @click="closeModal">&times;</span>
@@ -77,65 +58,36 @@
           <h2>{{ selectedStudent.name }}</h2>
         </div>
         <div class="modal-body">
-          <div class="student-info">
-            <p class="center-date">2024/2025</p>
-            <p class="center-bold">{{ selectedStudent.semester }}</p>
-          </div>
-          <div class="student-details">
-            <div class="detail-item">
-              <span class="detail-label">Promotion:</span>
-              <span class="detail-value">{{ selectedStudent.promotion }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Type d'engagement:</span>
-              <span class="detail-value">
-                {{ selectedStudent.engagementType }}
-                <i class="fas fa-edit edit-icon" @click="editEngagementType"></i>
-              </span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Type d'action:</span>
-              <span class="detail-value">
-                {{ selectedStudent.actionType }}
-                <i class="fas fa-edit edit-icon" @click="editActionType"></i>
-              </span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Période de réalisation:</span>
-              <span class="detail-value">{{ selectedStudent.period }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Description:</span>
-              <span class="detail-value">{{ selectedStudent.description }}</span>
-            </div>
-          </div>
+          <p><strong>Promotion:</strong> {{ selectedStudent.promotion }}</p>
+          <p><strong>Engagement:</strong> {{ selectedStudent.engagementType }}</p>
+          <p><strong>Action:</strong> {{ selectedStudent.actionType }}</p>
+          <p><strong>Description:</strong> {{ selectedStudent.description }}</p>
         </div>
         <div class="modal-footer">
-          <button class="modal-button" @click="closeModal">Fermer</button>
+          <button @click="closeModal">Fermer</button>
         </div>
       </div>
     </div>
 
-    <!-- Modale Choix du référent -->
+    <!-- Modale Choix Référent -->
     <div v-if="isChooseModalOpen" class="modal-overlay">
       <div class="modal-content">
         <span class="close-modal" @click="closeChooseModal">&times;</span>
         <div class="modal-header">
-          <h2>Référence</h2>
+          <h2>Assigner un Référent</h2>
         </div>
         <div class="modal-body">
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" v-model="referentEmail" placeholder="Entrez l'email du référent" />
-          </div>
-          <div class="form-group">
-            <label>Enseignant</label>
-            <input type="text" v-model="referentName" placeholder="Entrez le nom de l'enseignant" />
-          </div>
+          <label>Sélectionnez un référent :</label>
+          <select v-model="selectedReferentId">
+            <option disabled value="">-- Choisir un référent --</option>
+            <option v-for="ref in referents" :key="ref.idReferent" :value="ref.idReferent">
+              {{ ref.nom }} ({{ ref.email }})
+            </option>
+          </select>
         </div>
         <div class="modal-footer">
-          <button class="modal-button confirm" @click="confirmReferent">Confirmer</button>
-          <button class="modal-button cancel" @click="closeChooseModal">Annuler</button>
+          <button @click="confirmReferent">Confirmer</button>
+          <button @click="closeChooseModal">Annuler</button>
         </div>
       </div>
     </div>
@@ -158,8 +110,8 @@ export default {
       isModalOpen: false,
       isChooseModalOpen: false,
       selectedStudent: null,
-      referentEmail: '',
-      referentName: '',
+      referents: [],
+      selectedReferentId: '',
     };
   },
   computed: {
@@ -181,41 +133,47 @@ export default {
     },
   },
   async mounted() {
-    const participationsRes = await axios.get('/api/participes');
-    const participations = participationsRes.data._embedded?.participes || [];
+    try {
+      const participationsRes = await axios.get('http://localhost:8989/api/participes');
+      const participations = participationsRes.data.filter(p => p.statut === false || p.statut === null);
 
-    const pending = participations.filter(p => p.statut === false);
+      const studentList = await Promise.all(participations.map(async (p) => {
+        try {
+          const [etudiant, action, semestre, referentiel] = await Promise.all([
+            axios.get(`http://localhost:8989/api/etudiants/${p.id.idEtudiant}`),
+            axios.get(`http://localhost:8989/api/actions/${p.id.idAction}`),
+            axios.get(`http://localhost:8989/api/semestres/${p.id.idSemestre}`),
+            axios.get(`http://localhost:8989/api/referentiels/${p.idReferentiel || 1}`)
+          ]);
 
-    const studentList = await Promise.all(pending.map(async (p) => {
-      const [etudiant, action, semestre] = await Promise.all([
-        axios.get(p._links.etudiant.href),
-        axios.get(p._links.action.href),
-        axios.get(p._links.semestre.href)
-      ]);
+          return {
+            name: etudiant.data.prenom + ' ' + etudiant.data.nom,
+            email: etudiant.data.email,
+            promotion: etudiant.data.promotion,
+            engagementType: referentiel.data.nom || 'Non défini',
+            actionType: action.data.nom,
+            summary: p.descriptionParticipation,
+            description: p.descriptionParticipation,
+            actionId: action.data.idAction,
+            etudiantId: etudiant.data.idEtudiant,
+            semestreId: semestre.data.idSemestre,
+          };
+        } catch (e) {
+          console.error('Erreur sur une participation :', e);
+          return null;
+        }
+      }));
 
-      return {
-        name: etudiant.data.prenom + ' ' + etudiant.data.nom,
-        email: etudiant.data.email,
-        promotion: etudiant.data.promotion,
-        engagementType: action.data.referentiel?.nom || 'N/A',
-        actionType: action.data.nom,
-        summary: p.descriptionParticipation,
-        period: this.formatDate(semestre.data.dateDebutSemestre) + ' - ' + this.formatDate(semestre.data.dateFinSemestre),
-        description: p.descriptionParticipation,
-      };
-    }));
+      this.students = studentList.filter(Boolean);
+      this.availablePromotions = [...new Set(this.students.map(s => s.promotion))];
 
-    this.students = studentList;
-    this.availablePromotions = [...new Set(studentList.map(s => s.promotion))];
+      const refRes = await axios.get('http://localhost:8989/api/referents');
+      this.referents = refRes.data;
+    } catch (error) {
+      console.error('Erreur de chargement des données :', error);
+    }
   },
   methods: {
-    sendEmail(student) {
-      if (student.email) {
-        window.location.href = `mailto:${student.email}`;
-      } else {
-        alert("Aucune adresse e-mail trouvée pour cet étudiant.");
-      }
-    },
     openStudentModal(student) {
       this.selectedStudent = student;
       this.isModalOpen = true;
@@ -223,25 +181,28 @@ export default {
     closeModal() {
       this.isModalOpen = false;
     },
-    editEngagementType() {
-      alert('Modifier le type d\'engagement');
-    },
-    editActionType() {
-      alert('Modifier le type d\'action');
-    },
     openChooseModal(student) {
       this.selectedStudent = student;
+      this.selectedReferentId = '';
       this.isChooseModalOpen = true;
     },
     closeChooseModal() {
       this.isChooseModalOpen = false;
     },
-    confirmReferent() {
-      if (this.referentEmail && this.referentName) {
-        alert(`Référent ${this.referentName} (${this.referentEmail}) choisi pour ${this.selectedStudent.name}.`);
+    async confirmReferent() {
+      if (!this.selectedReferentId) {
+        alert('Veuillez sélectionner un référent.');
+        return;
+      }
+      try {
+        await axios.put(`http://localhost:8989/api/actions/${this.selectedStudent.actionId}/referents`, {
+          idReferent: this.selectedReferentId,
+        });
+        alert('Référent associé avec succès !');
         this.closeChooseModal();
-      } else {
-        alert('Veuillez remplir tous les champs.');
+      } catch (error) {
+        console.error('Erreur association référent :', error);
+        alert("Une erreur est survenue lors de l'association.");
       }
     },
     previousPage() {
@@ -253,10 +214,6 @@ export default {
     goToPage(page) {
       this.currentPage = page;
     },
-    formatDate(dateStr) {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short' });
-    }
   },
 };
 </script>

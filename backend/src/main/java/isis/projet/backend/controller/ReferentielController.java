@@ -1,14 +1,20 @@
 package isis.projet.backend.controller;
 
-import isis.projet.backend.service.ReferentielService;
-import isis.projet.backend.entity.Referentiel;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-
 import java.util.List;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import isis.projet.backend.entity.Referentiel;
+import isis.projet.backend.service.ReferentielService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Contrôleur pour gérer les référentiels.
