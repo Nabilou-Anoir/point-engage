@@ -1,63 +1,61 @@
 <template>
   <div class="main-layout">
-    <!-- Sidebar -->
+    <!-- Sidebar : Liste dynamique des engagements -->
     <div class="sidebar">
-      <button class="sidebar-button" @click="setActiveEngagement('associatif')">
-         Engagement Associatif<span class="icon">✏️</span>
-      </button>
-      <button class="sidebar-button" @click="setActiveEngagement('ecole')">
-         Engagement Ecole<span class="icon">✏️</span>
-      </button>
-      <button class="sidebar-button" @click="setActiveEngagement('climat')">
-         Engagement Climat-Environnement<span class="icon">✏️</span>
-      </button>
-      <button class="sidebar-button" @click="setActiveEngagement('diversite')">
-         Engagement Diversité<span class="icon">✏️</span>
-      </button>
+      <div v-for="ref in referentiels" :key="ref.idReferentiel">
+        <button
+          class="sidebar-button"
+          :class="{ active: activeReferentiel && activeReferentiel.idReferentiel === ref.idReferentiel }"
+          @click="selectEngagement(ref.idReferentiel)"
+        >
+          {{ ref.nom }}
+          <span class="icon">✏️</span>
+        </button>
+      </div>
       <button class="sidebar-button add-engagement" @click="openEngagementModal">
         <span class="icon">➕</span> Ajouter un Engagement
       </button>
+      <button class="sidebar-button manage-engagement" @click="openManageEngagementsModal">
+        <span class="icon">⚙️</span> Modifier les Engagements
+      </button>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Référentiels -->
-      <div class="referentiels-container">
-        <h2>{{ activeEngagement }}</h2>
-        <div class="referentiel-card">
-          <h3>Activités</h3>
-          <div class="activity-list">
-            <div class="activity-item" v-for="(activity, index) in activities" :key="activity">
-              {{ activity }}
-              <div class="activity-actions">
-                <span class="icon" @click="editActivity(index)">✏️</span>
-                <span class="icon" @click="deleteActivity(index)">🗑️</span>
-              </div>
+    <!-- Main Content : Affichage du référentiel actif et de ses actions -->
+    <div class="main-content" v-if="activeReferentiel">
+      <h2>{{ activeReferentiel.nom }}</h2>
+      <p>{{ activeReferentiel.description }}</p>
+      <div class="referentiel-card">
+        <h3>Actions</h3>
+        <div class="activity-list">
+          <div class="activity-item" v-for="(act, index) in activeReferentiel.actions" :key="act.idAction || index">
+            {{ act.nom }}
+            <div class="activity-actions">
+              <span class="icon" @click="editAction(act)">✏️</span>
+              <span class="icon" @click="deleteAction(act.idAction)">🗑️</span>
             </div>
           </div>
-          <button class="btn-add-activity" @click="openActivityModal">
-            <span class="icon">➕</span> Ajouter une Activité
-          </button>
         </div>
+        <button class="btn-add-activity" @click="openActionModal">
+          <span class="icon">➕</span> Ajouter une Action
+        </button>
       </div>
     </div>
+    <div class="main-content" v-else>
+      <p>Aucun engagement sélectionné.</p>
+    </div>
 
-    <!-- Modal pour ajouter/modifier un engagement -->
+    <!-- Modal Engagement (ajouter/modifier) -->
     <div v-if="showEngagementModal" class="modal-overlay">
       <div class="modal-content">
-        <h3>Ajouter un Engagement</h3>
+        <h3>{{ engagement.idReferentiel ? "Modifier" : "Ajouter" }} un Engagement</h3>
         <form @submit.prevent="saveEngagement">
           <div class="form-group">
-            <label for="engagementType">Type d'Engagement</label>
-            <input type="text" id="engagementType" v-model="engagement.type" required />
+            <label for="engagementName">Nom de l'Engagement</label>
+            <input type="text" id="engagementName" v-model="engagement.nom" required />
           </div>
           <div class="form-group">
             <label for="engagementDescription">Description</label>
             <textarea id="engagementDescription" v-model="engagement.description" required></textarea>
-          </div>
-          <div class="form-group">
-            <label for="engagementResponsable">Responsable</label>
-            <input type="text" id="engagementResponsable" v-model="engagement.responsable" required />
           </div>
           <div class="form-actions">
             <button type="button" class="btn-cancel" @click="closeEngagementModal">Annuler</button>
@@ -67,106 +65,278 @@
       </div>
     </div>
 
-    <!-- Modal pour ajouter/modifier une activité -->
-    <div v-if="showActivityModal" class="modal-overlay">
+    <!-- Modal Action (ajouter/modifier) -->
+    <div v-if="showActionModal" class="modal-overlay">
       <div class="modal-content">
-        <h3>Ajouter une Activité</h3>
-        <form @submit.prevent="saveActivity">
+        <h3>{{ action.idAction ? "Modifier" : "Ajouter" }} une Action</h3>
+        <form @submit.prevent="saveAction">
           <div class="form-group">
-            <label for="activityName">Nom de l'Activité</label>
-            <input type="text" id="activityName" v-model="activity.name" required />
+            <label for="actionName">Nom de l'Action</label>
+            <input type="text" id="actionName" v-model="action.nom" required />
           </div>
           <div class="form-group">
-            <label for="activityDescription">Description</label>
-            <textarea id="activityDescription" v-model="activity.description" required></textarea>
+            <label for="actionDescription">Description</label>
+            <textarea id="actionDescription" v-model="action.descriptionAction" required></textarea>
           </div>
           <div class="form-actions">
-            <button type="button" class="btn-cancel" @click="closeActivityModal">Annuler</button>
+            <button type="button" class="btn-cancel" @click="closeActionModal">Annuler</button>
             <button type="submit" class="btn-confirm">Confirmer</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Modal pour gérer l'ensemble des engagements (Modification/Suppression) -->
+    <div v-if="showManageEngagementsModal" class="modal-overlay">
+      <div class="modal-content wide">
+        <h3>Modifier / Supprimer les Engagements</h3>
+        <ul class="engagement-list">
+          <li v-for="ref in referentiels" :key="ref.idReferentiel" class="engagement-item">
+            <span>{{ ref.nom }}</span>
+            <div class="engagement-actions">
+              <button @click="editEngagement(ref)">Modifier</button>
+              <button @click="deleteEngagement(ref.idReferentiel)">Supprimer</button>
+            </div>
+          </li>
+        </ul>
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" @click="closeManageEngagementsModal">Fermer</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 
-// Gestion des modals
+// Tableaux et variables
+const referentiels = ref([]); // Tous les engagements (referentiels) chargés depuis le backend
+const activeReferentiel = ref(null);
+
 const showEngagementModal = ref(false);
-const showActivityModal = ref(false);
+const showActionModal = ref(false);
+const showManageEngagementsModal = ref(false);
+
+// Objet engagement pour modal d'ajout/modification d'engagement
 const engagement = ref({
-  type: "",
-  description: "",
-  responsable: "",
-});
-const activity = ref({
-  name: "",
-  description: "",
+  idReferentiel: null,
+  nom: "",
+  description: ""
 });
 
-const activeEngagement = ref("Engagement Associatif");
-const activities = ref(["MC", "BDE", "JPO"]);
+// Objet action pour modal d'ajout/modification d'action
+const action = ref({
+  idAction: null,
+  nom: "",
+  descriptionAction: ""
+});
 
-const setActiveEngagement = (engagement) => {
-  activeEngagement.value = `Engagement ${engagement.charAt(0).toUpperCase() + engagement.slice(1)}`;
-  // Mettre à jour les activités en fonction de l'engagement sélectionné
-  switch (engagement) {
-    case 'associatif':
-      activities.value = ["MC", "BDE", "JPO"];
-      break;
-    case 'ecole':
-      activities.value = ["Activité 1", "Activité 2"];
-      break;
-    case 'climat':
-      activities.value = ["Activité 3", "Activité 4"];
-      break;
-    case 'diversite':
-      activities.value = ["Activité 5", "Activité 6"];
-      break;
-    default:
-      activities.value = [];
+// Chargement de tous les référentiels depuis le backend
+const fetchReferentiels = async () => {
+  try {
+    const res = await fetch("http://localhost:8989/api/referentiels");
+    if (!res.ok) {
+      throw new Error("Erreur lors de la récupération des engagements");
+    }
+    const data = await res.json();
+    referentiels.value = data;
+    // Par défaut, on définit le premier comme actif
+    if (data.length > 0) {
+      activeReferentiel.value = data[0];
+    }
+  } catch (error) {
+    console.error("Erreur fetchReferentiels:", error);
   }
 };
 
+onMounted(() => {
+  fetchReferentiels();
+});
+
+// Lorsqu'on clique sur un engagement dans la sidebar, on récupère les détails mis à jour via GET /api/referentiels/{id}
+const selectEngagement = async (id) => {
+  try {
+    const res = await fetch(`http://localhost:8989/api/referentiels/${id}`);
+    if (!res.ok) {
+      throw new Error("Erreur lors de la récupération de l'engagement");
+    }
+    const data = await res.json();
+    activeReferentiel.value = data;
+  } catch (error) {
+    console.error("Erreur selectEngagement:", error);
+  }
+};
+
+// Modal Engagement
 const openEngagementModal = () => {
+  // Pour l'ajout, on réinitialise le formulaire
+  engagement.value = { idReferentiel: null, nom: "", description: "" };
   showEngagementModal.value = true;
 };
 
 const closeEngagementModal = () => {
   showEngagementModal.value = false;
-  engagement.value = { type: "", description: "", responsable: "" };
 };
 
-const saveEngagement = () => {
-  console.log("Engagement ajouté :", engagement.value);
-  closeEngagementModal();
+const saveEngagement = async () => {
+  try {
+    if (!engagement.value.idReferentiel) {
+      // Création d'un nouvel engagement
+      const res = await fetch("http://localhost:8989/api/referentiels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nom: engagement.value.nom,
+          description: engagement.value.description
+        })
+      });
+      if (!res.ok) {
+        throw new Error("Erreur lors de la création de l'engagement");
+      }
+      const newEngagement = await res.json();
+      referentiels.value.push(newEngagement);
+      activeReferentiel.value = newEngagement;
+    } else {
+      // Modification de l'engagement existant
+      const res = await fetch(`http://localhost:8989/api/referentiels/${engagement.value.idReferentiel}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nom: engagement.value.nom,
+          description: engagement.value.description
+        })
+      });
+      if (!res.ok) {
+        throw new Error("Erreur lors de la modification de l'engagement");
+      }
+      const updated = await res.json();
+      // Mettre à jour localement la liste des engagements
+      const idx = referentiels.value.findIndex(r => r.idReferentiel === updated.idReferentiel);
+      if (idx !== -1) {
+        referentiels.value[idx] = updated;
+      }
+      activeReferentiel.value = updated;
+    }
+    closeEngagementModal();
+  } catch (error) {
+    console.error("Erreur saveEngagement:", error);
+  }
 };
 
-const openActivityModal = () => {
-  showActivityModal.value = true;
+// Modal Action
+const openActionModal = () => {
+  action.value = { idAction: null, nom: "", descriptionAction: "" };
+  showActionModal.value = true;
 };
 
-const closeActivityModal = () => {
-  showActivityModal.value = false;
-  activity.value = { name: "", description: "" };
+const closeActionModal = () => {
+  showActionModal.value = false;
 };
 
-const saveActivity = () => {
-  console.log("Activité ajoutée :", activity.value);
-  activities.value.push(activity.value.name);
-  closeActivityModal();
+const saveAction = async () => {
+  try {
+    if (!action.value.idAction) {
+      // Création d'une nouvelle action
+      const payload = {
+        nom: action.value.nom,
+        descriptionAction: action.value.descriptionAction,
+        // Lier l'action au référentiel actif
+        referentiel: { idReferentiel: activeReferentiel.value.idReferentiel }
+      };
+      const res = await fetch("http://localhost:8989/api/actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        throw new Error("Erreur lors de la création de l'action");
+      }
+      const newAction = await res.json();
+      if (!activeReferentiel.value.actions) {
+        activeReferentiel.value.actions = [];
+      }
+      activeReferentiel.value.actions.push(newAction);
+    } else {
+      // Modification d'une action existante
+      const res = await fetch(`http://localhost:8989/api/actions/${action.value.idAction}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nom: action.value.nom,
+          descriptionAction: action.value.descriptionAction,
+          referentiel: { idReferentiel: activeReferentiel.value.idReferentiel }
+        })
+      });
+      if (!res.ok) {
+        throw new Error("Erreur lors de la modification de l'action");
+      }
+      const updatedAction = await res.json();
+      const idx = activeReferentiel.value.actions.findIndex(a => a.idAction === updatedAction.idAction);
+      if (idx !== -1) {
+        activeReferentiel.value.actions[idx] = updatedAction;
+      }
+    }
+    closeActionModal();
+  } catch (error) {
+    console.error("Erreur saveAction:", error);
+  }
 };
 
-const editActivity = (index) => {
-  const activityName = activities.value[index];
-  activity.value.name = activityName;
-  openActivityModal();
+const editAction = (act) => {
+  action.value = { ...act };
+  showActionModal.value = true;
 };
 
-const deleteActivity = (index) => {
-  activities.value.splice(index, 1);
+const deleteAction = async (actionId) => {
+  try {
+    const res = await fetch(`http://localhost:8989/api/actions/${actionId}`, {
+      method: "DELETE"
+    });
+    if (!res.ok) {
+      throw new Error("Erreur lors de la suppression de l'action");
+    }
+    activeReferentiel.value.actions = activeReferentiel.value.actions.filter(a => a.idAction !== actionId);
+  } catch (error) {
+    console.error("Erreur deleteAction:", error);
+  }
+};
+
+/* Gestion des engagements depuis la modal "Modifier les Engagements" */
+const openManageEngagementsModal = () => {
+  showManageEngagementsModal.value = true;
+};
+
+const closeManageEngagementsModal = () => {
+  showManageEngagementsModal.value = false;
+};
+
+const editEngagement = (ref) => {
+  engagement.value = {
+    idReferentiel: ref.idReferentiel,
+    nom: ref.nom,
+    description: ref.description
+  };
+  // Fermer la modal de gestion et ouvrir celle d'édition
+  showManageEngagementsModal.value = false;
+  showEngagementModal.value = true;
+};
+
+const deleteEngagement = async (idRef) => {
+  try {
+    const res = await fetch(`http://localhost:8989/api/referentiels/${idRef}`, {
+      method: "DELETE"
+    });
+    if (!res.ok) {
+      throw new Error("Erreur lors de la suppression de l'engagement");
+    }
+    referentiels.value = referentiels.value.filter(r => r.idReferentiel !== idRef);
+    if (activeReferentiel.value && activeReferentiel.value.idReferentiel === idRef) {
+      activeReferentiel.value = referentiels.value.length ? referentiels.value[0] : null;
+    }
+  } catch (error) {
+    console.error("Erreur deleteEngagement:", error);
+  }
 };
 </script>
 
@@ -178,25 +348,24 @@ const deleteActivity = (index) => {
   background-color: #f8f9fa;
 }
 
+/* Sidebar */
 .sidebar {
   width: 250px;
-  height: 600px;
   background-color: rgb(248, 243, 253);
   padding: 20px;
   display: flex;
   flex-direction: column;
-  margin-top: 39.5px;
+  margin-top: 40px;
 }
 
 .sidebar-button {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Aligne le texte à gauche et l'icône à droite */
+  justify-content: space-between;
   width: 100%;
   padding: 10px;
   margin-bottom: 10px;
   background-color: rgb(193, 151, 244);
-  color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -205,34 +374,46 @@ const deleteActivity = (index) => {
   color: #4a1f80;
 }
 
+.sidebar-button.active {
+  background-color: #4a1f80;
+  color: white;
+}
+
 .sidebar-button:hover {
   background-color: #4a1f80;
   color: #fefefefe;
 }
 
 .sidebar-button .icon {
-  margin-left: auto; /* Pousse l'icône vers la droite */
+  margin-left: auto;
   font-size: 16px;
 }
 
-.add-engagement {
+.add-engagement,
+.manage-engagement {
   margin-top: auto;
+  margin-bottom: 10px;
 }
 
-.add-engagement:hover {
-  background-color: #3a0f70;
+.manage-engagement {
+  background-color: #ffd966;
+  color: #444;
+}
+
+.manage-engagement:hover {
+  background-color: #f0c840;
+  color: #222;
 }
 
 /* Main Content */
 .main-content {
   padding: 20px;
-    font-family: 'Inter', sans-serif;
-    max-width: 1300px;
-    margin: 0 auto;
-    background-color: #f8f9fa;
+  font-family: 'Inter', sans-serif;
+  max-width: 1300px;
+  margin: 0 auto;
+  background-color: #f8f9fa;
 }
 
-/* Référentiels */
 .referentiels-container {
   margin-top: 20px;
 }
@@ -240,14 +421,15 @@ const deleteActivity = (index) => {
 .referentiels-container h2 {
   color: #6a3fa0;
   font-size: 22px;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .referentiel-card {
   background-color: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
 }
 
 .referentiel-card h3 {
@@ -294,10 +476,8 @@ const deleteActivity = (index) => {
   font-size: 14px;
   transition: background-color 0.3s ease;
   margin-top: 20px;
-  margin-left: auto; /* Déplace le bouton à droite */
-  display: block; /* Assure que le bouton occupe toute la largeur disponible */
-  justify-content: space-between;
-  align-items: center;
+  margin-left: auto;
+  display: block;
 }
 
 .btn-add-activity:hover {
@@ -311,7 +491,7 @@ const deleteActivity = (index) => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0,0,0,0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -322,7 +502,11 @@ const deleteActivity = (index) => {
   padding: 20px;
   border-radius: 8px;
   width: 400px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.modal-content.wide {
+  width: 500px;
 }
 
 .modal-content h3 {
@@ -364,7 +548,6 @@ const deleteActivity = (index) => {
   border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.3s ease;
 }
 
 .btn-cancel:hover {
@@ -379,10 +562,35 @@ const deleteActivity = (index) => {
   border-radius: 5px;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.3s ease;
 }
 
 .btn-confirm:hover {
   background-color: #5a2f90;
+}
+
+/* Modal: Liste des engagements */
+.engagement-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.engagement-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.engagement-actions button {
+  margin-left: 5px;
+}
+
+.no-engagement {
+  font-size: 16px;
+  color: #555;
+  margin-top: 40px;
+  text-align: center;
 }
 </style>
