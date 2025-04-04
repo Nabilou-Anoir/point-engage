@@ -17,6 +17,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
+@CrossOrigin(origins = "*")
 public class AuthController {
 
     private final UtilisateurRepository utilisateurRepository;
@@ -36,12 +37,12 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Utilisateur newUser) {
-        // 🔹 Vérifier si l'email est déjà utilisé
+        // Vérifier si l'email est déjà utilisé
         if (utilisateurRepository.findByEmail(newUser.getEmail()).isPresent()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email déjà utilisé.");
         }
 
-        // 🔹 Vérifier si le username est vide
+        // Vérifier si le username est vide
         if (newUser.getUsername() == null || newUser.getUsername().trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Le champ username est obligatoire.");
         }
@@ -67,7 +68,7 @@ public class AuthController {
             roleName = "ROLE_ETUDIANT";
         }
 
-        //  Vérifier si le rôle existe
+        // Vérifier si le rôle existe
         Optional<Role> roleOpt = roleRepository.findByName(roleName);
         if (roleOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Rôle non trouvé.");
@@ -75,10 +76,10 @@ public class AuthController {
 
         newUser.setRole(roleOpt.get());
 
-        //  Sauvegarde de l'utilisateur dans la base de données
+        // Sauvegarde de l'utilisateur dans la base de données
         Utilisateur savedUser = utilisateurRepository.save(newUser);
 
-        //  Ajouter l'utilisateur dans la table correspondante à son rôle
+        // Ajouter l'utilisateur dans la table correspondante à son rôle
         if ("ROLE_ETUDIANT".equals(roleName)) {
             Etudiant etudiant = new Etudiant();
             etudiant.setNom(newUser.getNom());
@@ -96,6 +97,37 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body("Utilisateur inscrit avec succès !");
     }
+
+    @PostMapping("/registerDirector")
+    public ResponseEntity<?> registerDirector(@RequestBody Utilisateur newUser) {
+        // Vérifier si l'email est déjà utilisé
+        if (utilisateurRepository.findByEmail(newUser.getEmail()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email déjà utilisé.");
+        }
+
+        // Vérifier si le username est vide
+        if (newUser.getUsername() == null || newUser.getUsername().trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Le champ username est obligatoire.");
+        }
+
+        // Vérifier si le username est déjà pris
+        if (utilisateurRepository.findByUsername(newUser.getUsername()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nom d'utilisateur déjà utilisé.");
+        }
+
+        // Forcer l'attribution du rôle directeur
+        Optional<Role> roleOpt = roleRepository.findByName("ROLE_DIRECTEUR");
+        if (roleOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Rôle non trouvé.");
+        }
+
+        newUser.setRole(roleOpt.get());
+
+        // Sauvegarder l'utilisateur dans la base de données
+        utilisateurRepository.save(newUser);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Directeur inscrit avec succès !");
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
         String email = credentials.get("email");
@@ -108,7 +140,6 @@ public class AuthController {
         }
 
         Utilisateur user = userOpt.get();
-
 
         if (!user.getPassword().equals(password)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mot de passe incorrect.");

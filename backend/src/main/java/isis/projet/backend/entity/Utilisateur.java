@@ -37,7 +37,6 @@ public class Utilisateur {
     @Column(name = "prenom")
     private String prenom;
 
-
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;

@@ -86,4 +86,7 @@ public class Participe {
     @Column(name="pointAction")
     private String pointAction;
 
+    @Column(name = "id_referentiel")
+    private Long idReferentiel;
+
 }

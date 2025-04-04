@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -18,6 +19,12 @@ public class UtilisateurController {
     @Autowired
     public UtilisateurController(UtilisateurRepository utilisateurRepository) {
         this.utilisateurRepository = utilisateurRepository;
+    }
+
+    @GetMapping("/directeurs")
+    public ResponseEntity<List<Utilisateur>> getDirecteurs() {
+        List<Utilisateur> directeurs = utilisateurRepository.findByRoleName("ROLE_DIRECTEUR");
+        return ResponseEntity.ok(directeurs);
     }
 
     @GetMapping("/{id}")

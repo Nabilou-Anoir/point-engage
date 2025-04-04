@@ -19,12 +19,14 @@ public class UtilisateurService {
     @Autowired
     private RoleRepository roleRepository;
 
-    // Créer un utilisateur avec rôle auto-déduit
+    // Enregistrement d'un utilisateur "classique" avec rôle auto-déduit
     public Optional<Utilisateur> registerUser(Utilisateur utilisateur) {
         if (utilisateurRepository.findByEmail(utilisateur.getEmail()).isPresent()) {
             return Optional.empty();
         }
-
+        if (utilisateurRepository.findByUsername(utilisateur.getUsername()).isPresent()) {
+            return Optional.empty();
+        }
         String email = utilisateur.getEmail();
         Role role = roleRepository.findByName(
                 email.endsWith("@etud.univ-jfc.fr") ? "ROLE_ETUDIANT" :
@@ -36,6 +38,24 @@ public class UtilisateurService {
             return Optional.empty();
         }
 
+        utilisateur.setRole(role);
+        Utilisateur saved = utilisateurRepository.save(utilisateur);
+        return Optional.of(saved);
+    }
+
+    // Enregistrement d'un directeur en forçant le rôle ROLE_DIRECTEUR
+    public Optional<Utilisateur> registerDirector(Utilisateur utilisateur) {
+        // Vérifier que l'email et le username ne sont pas déjà utilisés
+        if (utilisateurRepository.findByEmail(utilisateur.getEmail()).isPresent()) {
+            return Optional.empty();
+        }
+        if (utilisateurRepository.findByUsername(utilisateur.getUsername()).isPresent()) {
+            return Optional.empty();
+        }
+        Role role = roleRepository.findByName("ROLE_DIRECTEUR").orElse(null);
+        if (role == null) {
+            return Optional.empty();
+        }
         utilisateur.setRole(role);
         Utilisateur saved = utilisateurRepository.save(utilisateur);
         return Optional.of(saved);

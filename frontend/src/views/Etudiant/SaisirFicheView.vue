@@ -22,7 +22,7 @@
       <!-- Sélection du semestre -->
       <div class="form-group">
         <label>Semestre <span class="required">*</span></label>
-        <select v-model="fiche.semestre" required>
+        <select v-model.number="fiche.semestre" required>
           <option disabled value="">-- Sélectionnez un semestre --</option>
           <option v-for="sem in semestres" :key="sem.idSemestre" :value="sem.idSemestre">
             S{{ sem.nbSemestre }}
@@ -33,7 +33,8 @@
       <!-- Sélection du référentiel -->
       <div class="form-group">
         <label>Référentiel <span class="required">*</span></label>
-        <select v-model="fiche.referentiel" required>
+        <!-- Utilisation de v-model.number pour forcer la conversion en nombre -->
+        <select v-model.number="fiche.referentiel" required>
           <option disabled value="">-- Sélectionnez un référentiel --</option>
           <option v-for="ref in referentiels" :key="ref.idReferentiel" :value="ref.idReferentiel">
             {{ ref.nom }}
@@ -44,7 +45,7 @@
       <!-- Sélection de l'action -->
       <div class="form-group">
         <label>Action <span class="required">*</span></label>
-        <select v-model="fiche.action" required>
+        <select v-model.number="fiche.action" required>
           <option disabled value="">-- Sélectionnez une action --</option>
           <option v-for="act in actions" :key="act.idAction" :value="act.idAction">
             {{ act.nom }}
@@ -104,16 +105,16 @@ export default {
   name: 'SaisirFicheView',
   data() {
     return {
-      // L'étudiant connecté sera récupéré via l'email
+      // Informations de l'étudiant connecté
       etudiant: {
         idEtudiant: null,
         nom: '',
         prenom: ''
       },
-      // Données du formulaire (les nom et prénom sont récupérés automatiquement)
+      // Données du formulaire
       fiche: {
         semestre: '',
-        referentiel: '',
+        referentiel: '', // Cette valeur correspondra à l'id du référentiel choisi
         action: '',
         dateDebut: '',
         dateFin: '',
@@ -123,14 +124,14 @@ export default {
       semestres: [],
       referentiels: [],
       actions: [],
-      // Popup
+      // Variables pour la popup de confirmation
       showPopup: false,
       popupMessage: '',
       submissionSuccess: false
     };
   },
   created() {
-    // Récupérer l'utilisateur connecté depuis le sessionStorage
+    // Récupération de l'utilisateur connecté depuis le sessionStorage
     const storedUser = sessionStorage.getItem('loggedInUser');
     if (storedUser) {
       const user = JSON.parse(storedUser);
@@ -187,7 +188,7 @@ export default {
         .catch(err => console.log('Erreur actions:', err));
     },
     submitForm() {
-      // Validation de dates
+      // Vérification de la cohérence des dates
       if (new Date(this.fiche.dateDebut) > new Date(this.fiche.dateFin)) {
         this.popupMessage = "La date de début doit être antérieure à la date de fin.";
         this.showPopup = true;
@@ -200,11 +201,16 @@ export default {
         this.submissionSuccess = false;
         return;
       }
-      // Construction du payload en utilisant l'id de l'étudiant connecté
+
+      // Log de débogage pour vérifier la valeur du référentiel sélectionné
+      console.log("Valeur sélectionnée pour le référentiel:", this.fiche.referentiel);
+
+      // Construction du payload avec le champ idReferentiel
       const participationPayload = {
         etudiant: { idEtudiant: this.etudiant.idEtudiant },
         action: { idAction: Number(this.fiche.action) },
         semestre: { idSemestre: Number(this.fiche.semestre) },
+        idReferentiel: Number(this.fiche.referentiel),
         dateDebutParticipation: this.fiche.dateDebut,
         dateFinParticipation: this.fiche.dateFin,
         descriptionParticipation: this.fiche.description,
@@ -233,7 +239,7 @@ export default {
         });
     },
     annuler() {
-      // Réinitialiser les champs du formulaire, en gardant le nom/prénom de l'étudiant connecté
+      // Réinitialisation des champs du formulaire, tout en gardant les infos de l'étudiant
       this.fiche.semestre = '';
       this.fiche.referentiel = '';
       this.fiche.action = '';
