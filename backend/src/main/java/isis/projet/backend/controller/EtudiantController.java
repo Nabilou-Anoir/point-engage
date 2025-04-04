@@ -9,7 +9,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import jakarta.validation.Valid;
 
 /**
@@ -98,5 +103,25 @@ public class EtudiantController {
         }
 
         return ResponseEntity.ok(etudiant);
+    }
+    @GetMapping("/{id}/totalPoints")
+    public ResponseEntity<BigDecimal> getTotalPoints(@PathVariable Integer id) {
+        BigDecimal totalPoints = etudiantService.calculateTotalPoints(id);
+        return ResponseEntity.ok(totalPoints);
+    }
+    @GetMapping("/allPoints")
+    public ResponseEntity<List<Map<String, Object>>> getAllStudentsWithPoints() {
+        List<Etudiant> students = etudiantService.findAll();
+        List<Map<String, Object>> studentPoints = students.stream().map(etudiant -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", etudiant.getIdEtudiant());
+            map.put("nom", etudiant.getNom());
+            map.put("prenom", etudiant.getPrenom());
+            map.put("promotion", etudiant.getPromotion());
+            // Utilisation de votre méthode existante pour calculer le total des points
+            map.put("points", etudiantService.calculateTotalPoints(etudiant.getIdEtudiant()));
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(studentPoints);
     }
 }

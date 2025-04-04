@@ -32,12 +32,7 @@ public class Referent {
     @Column(name = "email")
     private String email;
 
-    /**
-     * Relation bidirectionnelle :
-     * Un référent peut valider plusieurs actions.
-     * Ce côté est le "managed" et sera sérialisé.
-     */
     @OneToMany(mappedBy = "referent", cascade = CascadeType.ALL)
-    @JsonManagedReference(value = "referent-actions")
-    private List<Action> actionsValidees;
+    @JsonManagedReference(value = "referent-participations")
+    private List<Participe> participationsValidees;
 }

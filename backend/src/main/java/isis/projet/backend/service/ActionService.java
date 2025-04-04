@@ -67,7 +67,6 @@ public class ActionService {
                     action.setDescriptionAction(updated.getDescriptionAction());
                     action.setDateDebutAction(updated.getDateDebutAction());
                     action.setDateFinAction(updated.getDateFinAction());
-                    action.setReferent(updated.getReferent());
                     action.setReferentiel(updated.getReferentiel());
                     return actionRepository.save(action);
                 })

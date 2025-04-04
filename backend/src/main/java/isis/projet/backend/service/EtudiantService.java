@@ -2,12 +2,15 @@ package isis.projet.backend.service;
 
 import isis.projet.backend.entity.Etudiant;
 import isis.projet.backend.dao.EtudiantRepository;
+import isis.projet.backend.entity.Participe;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Service pour la gestion des entités Etudiant.
@@ -83,5 +86,13 @@ public class EtudiantService {
     }
     public Etudiant findByEmail(String email) {
         return etudiantRepository.findByEmail(email);
+    }
+
+    public BigDecimal calculateTotalPoints(Integer etudiantId) {
+        Etudiant etudiant = findById(etudiantId);
+        return etudiant.getParticipations().stream()
+                .map(Participe::getTotalPoints)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

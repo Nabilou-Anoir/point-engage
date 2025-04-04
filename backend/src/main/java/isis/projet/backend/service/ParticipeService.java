@@ -74,6 +74,11 @@ public class ParticipeService {
         participe.setDateFinParticipation(updated.getDateFinParticipation());
         participe.setDescriptionParticipation(updated.getDescriptionParticipation());
         participe.setStatut(updated.getStatut());
+        participe.setReferent(updated.getReferent());
+        participe.setResumeDirecteur(updated.getResumeDirecteur());
+        participe.setRemarqueReferent(updated.getRemarqueReferent());
+        participe.setPointAction(updated.getPointAction());
+
         validateTotalPoints(participe);
         return participeRepository.save(participe);
     }

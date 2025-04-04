@@ -53,6 +53,11 @@ public class Participe {
     @JsonBackReference(value = "semestre-participations")
     private Semestre semestre;
 
+    @ManyToOne
+    @JoinColumn(name = "id_referent", nullable = true)
+    @JsonBackReference(value = "referent-participations")
+    private Referent referent;
+
     @Column(name = "totalPoints")
     private BigDecimal totalPoints;
 
@@ -71,5 +76,14 @@ public class Participe {
 
     @Column(name = "statut")
     private Boolean  statut;
+
+    @Column(name="resumeDirecteur")
+    private String resumeDirecteur;
+
+    @Column(name="remarqueReferent")
+    private String remarqueReferent;
+
+    @Column(name="pointAction")
+    private String pointAction;
 
 }

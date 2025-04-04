@@ -41,16 +41,7 @@ public class Action {
     @Column(name = "descriptionAction")
     @Lob
     private String descriptionAction;
-
-    /**
-     * Plusieurs actions peuvent être validées par un même référent.
-     * Ce côté est le "back" de la relation référent-actions.
-     */
-    @ManyToOne
-    @JoinColumn(name = "id_referent")
-    @JsonBackReference(value = "referent-actions")
-    private Referent referent;
-
+    
     /**
      * Plusieurs actions peuvent appartenir à un même référentiel.
      * Ce côté est le "back" de la relation référentiel-actions.

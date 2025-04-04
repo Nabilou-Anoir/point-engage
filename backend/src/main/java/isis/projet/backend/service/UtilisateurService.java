@@ -7,6 +7,7 @@ import isis.projet.backend.entity.Utilisateur;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -18,39 +19,63 @@ public class UtilisateurService {
     @Autowired
     private RoleRepository roleRepository;
 
-    /**
-     * Enregistre un utilisateur en attribuant un rôle automatiquement selon l'email.
-     * @param utilisateur - L'utilisateur à enregistrer
-     * @return Un `Optional<Utilisateur>` contenant l'utilisateur enregistré, ou vide si l'email existe déjà.
-     */
+    // Créer un utilisateur avec rôle auto-déduit
     public Optional<Utilisateur> registerUser(Utilisateur utilisateur) {
         if (utilisateurRepository.findByEmail(utilisateur.getEmail()).isPresent()) {
-            return Optional.empty(); // L'email est déjà utilisé
+            return Optional.empty();
         }
 
-        // Déterminer le rôle en fonction de l'email
         String email = utilisateur.getEmail();
-        Role role = roleRepository.findByName(email.endsWith("@etud.univ-jfc.fr") ? "ROLE_ETUDIANT" :
-                email.endsWith("@univ-jfc.fr") ? "ROLE_REFERENT" :
-                        "ROLE_SERVICE_SCOLARITE").orElse(null);
+        Role role = roleRepository.findByName(
+                email.endsWith("@etud.univ-jfc.fr") ? "ROLE_ETUDIANT" :
+                        email.endsWith("@univ-jfc.fr") ? "ROLE_REFERENT" :
+                                "ROLE_SERVICE_SCOLARITE"
+        ).orElse(null);
 
         if (role == null) {
-            return Optional.empty(); // Aucun rôle trouvé
+            return Optional.empty();
         }
 
         utilisateur.setRole(role);
-        utilisateurRepository.save(utilisateur);
-
-        return Optional.of(utilisateur);
+        Utilisateur saved = utilisateurRepository.save(utilisateur);
+        return Optional.of(saved);
     }
 
-    /**
-     * Vérifie les identifiants d'un utilisateur.
-     * @param email - Email de l'utilisateur
-     * @param password - Mot de passe (non crypté ici)
-     * @return Un `Optional<Utilisateur>` si les identifiants sont valides, sinon `Optional.empty()`.
-     */
+    // Connexion utilisateur
     public Optional<Utilisateur> login(String email, String password) {
         return utilisateurRepository.findByEmailAndPassword(email, password);
+    }
+
+    // Lire tous les utilisateurs
+    public List<Utilisateur> getAllUtilisateurs() {
+        return utilisateurRepository.findAll();
+    }
+
+    // Lire un utilisateur par ID
+    public Optional<Utilisateur> getUtilisateurById(Long id) {
+        return utilisateurRepository.findById(id);
+    }
+
+    // Modifier un utilisateur
+    public Optional<Utilisateur> updateUtilisateur(Long id, Utilisateur updated) {
+        return utilisateurRepository.findById(id).map(existing -> {
+            existing.setUsername(updated.getUsername());
+            existing.setEmail(updated.getEmail());
+            existing.setNom(updated.getNom());
+            existing.setPrenom(updated.getPrenom());
+            existing.setPassword(updated.getPassword());
+            existing.setPromotion(updated.getPromotion());
+            existing.setRole(updated.getRole());
+            return utilisateurRepository.save(existing);
+        });
+    }
+
+    // Supprimer un utilisateur
+    public boolean deleteUtilisateur(Long id) {
+        if (utilisateurRepository.existsById(id)) {
+            utilisateurRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }
