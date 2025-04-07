@@ -44,14 +44,6 @@
       <!-- 📅 Filtres -->
       <div class="filters">
         <div class="filter-group">
-          <label>Date début</label>
-          <input type="date" class="date-input" v-model="dateDebut" />
-        </div>
-        <div class="filter-group">
-          <label>Date fin</label>
-          <input type="date" class="date-input" v-model="dateFin" />
-        </div>
-        <div class="filter-group">
           <label>Année universitaire</label>
           <select v-model="anneeUniversitaire" class="select-input">
             <option value="2024/2025">2024/2025</option>

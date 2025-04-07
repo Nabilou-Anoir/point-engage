@@ -60,6 +60,7 @@ const hasSidebar = computed(() => (isEtudiant.value || isDirecteur.value) && sho
   height: 100vh;
   display: flex;
   flex-direction: column;
+  margin-right:10px;
 }
 
 .layout {
