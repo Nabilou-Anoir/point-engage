@@ -50,46 +50,60 @@
         <span>Historique</span>
       </router-link>
 
-      <!-- Déconnexion (Dropdown) -->
+      <!-- Déconnexion -->
       <div class="logout-container" @click="toggleDropdown">
         <div class="nav-link logout-link">
           <i class="fas fa-sign-out-alt"></i>
           <span>Déconnexion</span>
         </div>
-        <span class="user-email">{{ userData.email }}</span>
-
-        <div v-if="dropdownVisible" class="dropdown-menu">
-          <router-link to="/referent/profil" class="dropdown-item">
-            <i class="fas fa-cog"></i>
-            <span>Paramètres</span>
-          </router-link>
-          <router-link to="/logout" class="dropdown-item">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Déconnexion</span>
-          </router-link>
+        <!-- Menu déroulant (popup de confirmation) -->
+        <div
+          v-if="showLogoutConfirm"
+          class="popup-overlay"
+          @click.self="showLogoutConfirm = false">
+          <div class="popup-box" @click.stop>
+            <div class="popup-icon">
+              <i class="fas fa-question-circle"></i>
+            </div>
+            <p class="popup-message">
+              Êtes-vous sûr de vouloir vous déconnecter ?
+            </p>
+            <div class="popup-buttons">
+              <button class="btn-cancel" @click.stop="showLogoutConfirm = false">
+                Annuler
+              </button>
+              <button class="btn-confirm" @click="logout">
+                Oui, déconnexion
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </div> <!-- FIN DE center-section -->
   </nav>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
+const router = useRouter();
+
 const isActive = (path) => route.path === path;
 
 const notifCount = ref(3); // à connecter à ton backend plus tard
 
-const userData = ref({
-  name: 'Référent',
-  email: 'referent@univ-jfc.fr',
-});
+const showLogoutConfirm = ref(false);
 
-const dropdownVisible = ref(false);
 const toggleDropdown = () => {
-  dropdownVisible.value = !dropdownVisible.value;
+  showLogoutConfirm.value = !showLogoutConfirm.value;
+};
+
+const logout = () => {
+  console.log('Déconnecté !');
+  showLogoutConfirm.value = false;
+  router.push('/'); // redirige vers la page d'accueil ou login
 };
 </script>
 
@@ -209,5 +223,97 @@ const toggleDropdown = () => {
 }
 .fas {
   font-size: 1.2rem;
+}
+/* =======================
+   Popup de déconnexion
+   ======================= */
+
+   .popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.popup-box {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.popup-icon {
+  font-size: 2.5rem;
+  color: #6a3fa0;
+  margin-bottom: 20px;
+}
+
+.popup-message {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #7f56d9, #5f99ae);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel {
+  background: linear-gradient(135deg, #ed6962, #c0392b);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-confirm:hover,
+.btn-cancel:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-confirm:active,
+.btn-cancel:active {
+  transform: translateY(0);
 }
 </style>

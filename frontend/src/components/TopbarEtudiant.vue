@@ -40,46 +40,36 @@
         <span>Profil</span>
       </router-link>
 
-      <div class="nav-link logout-link" ref="logoutRef">
-        <div @click="toggleDropdown">
+      <!-- Déconnexion -->
+      <div class="logout-container" @click="toggleDropdown">
+        <div class="nav-link logout-link">
           <i class="fas fa-sign-out-alt"></i>
           <span>Déconnexion</span>
         </div>
-        <div v-if="dropdownVisible" class="dropdown-menu">
-          <router-link to="/settings" class="dropdown-item">
-            <i class="fas fa-cog"></i>
-            <span>Paramètres</span>
-          </router-link>
-          <div class="dropdown-item" @click.stop="showLogoutConfirm = true">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Déconnexion</span>
+        <!-- Menu déroulant (popup de confirmation) -->
+        <div
+          v-if="showLogoutConfirm"
+          class="popup-overlay"
+          @click.self="showLogoutConfirm = false">
+          <div class="popup-box" @click.stop>
+            <div class="popup-icon">
+              <i class="fas fa-question-circle"></i>
+            </div>
+            <p class="popup-message">
+              Êtes-vous sûr de vouloir vous déconnecter ?
+            </p>
+            <div class="popup-buttons">
+              <button class="btn-cancel" @click.stop="showLogoutConfirm = false">
+                Annuler
+              </button>
+              <button class="btn-confirm" @click="logout">
+                Oui, déconnexion
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <div
-      v-if="showLogoutConfirm"
-      class="popup-overlay"
-      @click.self="showLogoutConfirm = false"
-    >
-      <div class="popup-box">
-        <div class="popup-icon">
-          <i class="fas fa-question-circle"></i>
-        </div>
-        <p class="popup-message">
-          Êtes-vous sûr de vouloir vous déconnecter ?
-        </p>
-        <div class="popup-buttons">
-          <button class="btn-cancel" @click="showLogoutConfirm = false">
-            Annuler
-          </button>
-          <button class="btn-confirm" @click="logout">
-            Oui, déconnexion
-          </button>
-        </div>
-      </div>
-    </div>
+    </div> <!-- FIN DE center-section -->
   </nav>
 </template>
 
