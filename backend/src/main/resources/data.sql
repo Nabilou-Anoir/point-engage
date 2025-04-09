@@ -127,31 +127,31 @@ VALUES
      'Présidente association étudiante', TRUE,
  'Excellente implication dans la gestion de l’association',
      'Participation validée avec engagement continu',
-     'Engagement associatif', 1),
+     0.2, 1),
 
     (2, 4, 2, 2, 0.75, 2, '2025-03-05', '2025-06-10',
      'Participation aux ateliers La Main à la Pâte', TRUE,
      'Bonne contribution dans le tutorat',
      'Ateliers bien menés, présence régulière',
-     'Engagement éducatif', 2),
+     0.1, 2),
 
     (3, 7, 2, 3, 0.60, 1, '2025-05-15', '2025-05-17',
      'Organisation d’un atelier numérique', TRUE,
      'A bien animé la fresque numérique',
      'Très bonne pédagogie',
-     'Engagement écologique', 3),
+     0.14, 3),
 
     (4, 9, 1, 1, 0.90, 2, '2025-04-10', '2025-11-20',
      'Organisation et animation de Campus en Transition', TRUE,
      'Acteur clé dans les événements campus',
      'Très bon impact écologique',
-     'Engagement écologique', 3),
+     0.3, 3),
 
     (5, 11, 2, 2, 0.50, 1, '2025-02-05', '2025-02-06',
      'Stand formation lors de la JPO', TRUE,
      'Bon contact avec les visiteurs',
      'Participation dynamique',
-     'Engagement promotionnel', 4);
+     0.2, 4);
 
 -- Table role
 INSERT INTO role (name) VALUES ('ROLE_ETUDIANT');
@@ -180,7 +180,7 @@ INSERT INTO participe (
 VALUES (
            6, 1, 1, 1,
            0.50, 1, '2024-07-15', '2024-08-15',
-           'Participation à un événement associatif', TRUE, 'Bonne implication associative', 'Participation validée', 'Engagement associatif', 1
+           'Participation à un événement associatif', TRUE, 'Bonne implication associative', 'Participation validée', 0.1, 1
        );
 
 -- Participation en semestre 2 :
@@ -192,7 +192,7 @@ INSERT INTO participe (
 VALUES (
            6, 2, 2, 1,
            0.75, 2, '2025-02-01', '2025-03-01',
-           'Contribution à un projet associatif', TRUE, 'Participation active', 'Engagement continu', 'Engagement associatif', 1
+           'Contribution à un projet associatif', TRUE, 'Participation active', 'Engagement continu', 0.2, 1
        );
 
 -------------------------------------------------------------------
@@ -207,7 +207,7 @@ INSERT INTO participe (
 VALUES (
            4, 3, 3, 2,
            0.60, 1, '2026-05-10', '2026-06-10',
-           'Participation au bénévolat hors campus', TRUE, 'Bonne performance', 'Bon engagement', 'Engagement associatif', 1
+           'Participation au bénévolat hors campus', TRUE, 'Bonne performance', 'Bon engagement', 0.3, 1
        );
 
 -- Participation en semestre 4 (pour Garcia Louis) :
@@ -219,7 +219,7 @@ INSERT INTO participe (
 VALUES (
            7, 4, 4, 2,
            0.80, 2, '2027-01-05', '2027-02-05',
-           'Participation aux ateliers éducatifs', TRUE, 'Performance satisfaisante', 'Engagement éducatif validé', 'Engagement éducatif', 2
+           'Participation aux ateliers éducatifs', TRUE, 'Performance satisfaisante', 'Engagement éducatif validé', 0.4, 2
        );
 
 -------------------------------------------------------------------
@@ -234,7 +234,7 @@ INSERT INTO participe (
 VALUES (
            1, 5, 5, 3,
            1.00, 3, '2027-05-15', '2027-06-15',
-           'Participation en tant que mentor dans le programme AFEV', TRUE, 'Mentorat très apprécié', 'Engagement éducatif confirmé', 'Engagement éducatif', 2
+           'Participation en tant que mentor dans le programme AFEV', TRUE, 'Mentorat très apprécié', 'Engagement éducatif confirmé', 0.1, 2
        );
 
 -- Participation en semestre 6 (pour Dubois Hugo) :
@@ -246,7 +246,7 @@ INSERT INTO participe (
 VALUES (
            5, 6, 6, 3,
            0.90, 2, '2028-03-10', '2028-04-10',
-           'Aide aux devoirs pour élèves', TRUE, 'Bon tutorat', 'Engagement éducatif positif', 'Engagement éducatif', 2
+           'Aide aux devoirs pour élèves', TRUE, 'Bon tutorat', 'Engagement éducatif positif', 0.2, 2
        );
 
 -------------------------------------------------------------------
@@ -260,8 +260,8 @@ INSERT INTO participe (
 )
 VALUES (
            3, 7, 7, 1,
-           0.70, 1, '2029-05-20', '2029-06-20',
-           'Animation d’un atelier Fresque du Climat', TRUE, 'Animation dynamique', 'Engagement écologique', 'Engagement écologique', 3
+           null, 1, '2029-05-20', '2029-06-20',
+           'Animation d’un atelier Fresque du Climat', TRUE, 'Animation dynamique', 'Engagement écologique', null, 3
        );
 
 -- Participation en semestre 8 :
@@ -272,8 +272,8 @@ INSERT INTO participe (
 )
 VALUES (
            3, 8, 8, 1,
-           0.85, 2, '2030-02-15', '2030-03-15',
-           'Participation active dans Fresque du Numérique', TRUE, 'Bonne implication', 'Engagement écologique confirmé', 'Engagement écologique', 3
+           null, 2, '2030-02-15', '2030-03-15',
+           'Participation active dans Fresque du Numérique', TRUE, 'Bonne implication', 'Engagement écologique confirmé', null, 3
        );
 
 -------------------------------------------------------------------
@@ -287,8 +287,8 @@ INSERT INTO participe (
 )
 VALUES (
            9, 9, 9, 2,
-           1.20, 3, '2031-07-10', '2031-08-10',
-           'Participation à Campus en Transition', TRUE, 'Excellente organisation', 'Engagement écologique fort', 'Engagement écologique', 3
+           null, 3, '2031-07-10', '2031-08-10',
+           'Participation à Campus en Transition', TRUE, 'Excellente organisation', 'Engagement écologique fort', null, 3
        );
 
 -- Participation en semestre 10 :
@@ -300,5 +300,5 @@ INSERT INTO participe (
 VALUES (
            9, 10, 10, 2,
            1.10, 2, '2032-09-05', '2032-10-05',
-           'Participation lors d’un événement promotionnel', TRUE, 'Bonne représentation', 'Engagement promotionnel validé', 'Engagement promotionnel', 4
+           'Participation lors d’un événement promotionnel', TRUE, 'Bonne représentation', 'Engagement promotionnel validé', 0.2, 4
        );

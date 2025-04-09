@@ -23,7 +23,7 @@
           <th>Date de Réalisation</th>
           <th class="text-right">Statut</th>
           <th class="text-right">Total Points</th>
-          <th class="text-right">Actions</th>
+          <th class="text-right">Information</th>
         </tr>
         </thead>
         <tbody>
