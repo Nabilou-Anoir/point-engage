@@ -7,8 +7,8 @@
           <label class="selectlabel">Semestre</label>
           <div class="select-container">
             <select v-model="selectedSemestre" class="select-input">
-              <option value="S1">Semestre 1</option>
-              <option value="S2">Semestre 2</option>
+              <option value="1">Semestre 1</option>
+              <option value="2">Semestre 2</option>
             </select>
           </div>
         </div>
@@ -52,6 +52,11 @@
 
       <h1 class="title">Référent</h1>
 
+      <!-- 👁️ Voir ce que Vue charge -->
+      <pre style="background:#eee; padding:1em; max-height:300px; overflow:auto">
+        {{ eleves }}
+      </pre>
+
       <!-- 🧾 Tableau -->
       <div class="table-section">
         <div class="table-container">
@@ -80,7 +85,13 @@
                 <td>
                   <input type="checkbox" v-model="eleve.valide" class="styled-checkbox" />
                 </td>
-                <td>{{ eleve.remarqueReferent }}</td>
+                <td>
+                  <input
+                    type="text"
+                    v-model="eleve.remarqueReferent"
+                    class="text-input"
+                  />
+                </td>
                 <td>
                   <input
                     type="checkbox"
@@ -89,6 +100,9 @@
                     class="styled-checkbox"
                   />
                 </td>
+              </tr>
+              <tr v-if="elevesFiltres.length === 0">
+                <td colspan="7">Aucune participation trouvée.</td>
               </tr>
             </tbody>
           </table>
@@ -104,24 +118,25 @@ import axios from "axios";
 
 const baseURL = "http://localhost:8989/api";
 
-// 🔢 États
 const eleves = ref([]);
 const searchQuery = ref("");
-const selectedSemestre = ref("S1");
+const selectedSemestre = ref("1");
 const selectedAnnee = ref("2024/2025");
 const dateDebut = ref("");
 const dateFin = ref("");
 
-// 👁️ Toggle affichage fiche
 const toggleFicheVisible = (eleve) => {
   eleve.ficheVisible = !eleve.ficheVisible;
 };
 
-// ✅ Charger les données depuis le backend
 const fetchParticipations = async () => {
   try {
     const { data: participations } = await axios.get(`${baseURL}/participes`);
+    console.log("📡 Participations brutes :", participations);
+
+    // 👉 ici tu peux remettre le filtre plus tard
     const filtered = participations.filter(p => p.statut === false || p.statut === null);
+    console.log("🔍 Participations filtrées (non validées) :", filtered);
 
     const eleveList = await Promise.all(filtered.map(async (p) => {
       try {
@@ -139,49 +154,39 @@ const fetchParticipations = async () => {
           remarqueReferent: p.remarqueReferent || "",
           valide: p.statut ?? false,
           envoye: false,
-          etudiantId: etudiant.data.idEtudiant,
-          actionId: action.data.idAction,
+          etudiantId: p.id.idEtudiant,
+          actionId: p.id.idAction,
           semestreId: p.id.idSemestre,
         };
       } catch (err) {
-        console.error("Erreur sur un élève :", err);
+        console.error("⛔ Erreur chargement élève :", err);
         return null;
       }
     }));
 
     eleves.value = eleveList.filter(Boolean);
+    console.log("✅ Élèves transformés :", eleves.value);
   } catch (error) {
-    console.error("Erreur lors du chargement :", error);
+    console.error("❌ Erreur lors du chargement des participations :", error);
   }
 };
 
-// 📤 Envoi au backend
+// 👉 Pour test : affiche tout sans filtrer
+const elevesFiltres = computed(() => eleves.value);
+
 const validerEnvoi = async (eleve) => {
   try {
     await axios.put(`${baseURL}/participes/${eleve.etudiantId}/${eleve.actionId}/${eleve.semestreId}`, {
       statut: eleve.valide,
       remarqueReferent: eleve.remarqueReferent,
     });
-    console.log("Participation mise à jour :", eleve.nom);
+    console.log("✅ Participation mise à jour :", eleve.nom);
   } catch (e) {
-    console.error("Erreur d’envoi :", e);
+    console.error("❌ Erreur d’envoi :", e.response?.data || e.message);
     alert("Erreur lors de l’envoi de la participation.");
   }
 };
 
-// 🔍 Filtrage dynamique
-const elevesFiltres = computed(() => {
-  return eleves.value.filter((eleve) => {
-    const matchQuery = searchQuery.value
-      ? eleve.nom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        eleve.promotion.toLowerCase().includes(searchQuery.value.toLowerCase())
-      : true;
-
-    return matchQuery;
-  });
-});
-
-// 📦 Appel initial
 onMounted(fetchParticipations);
 </script>
 
