@@ -41,7 +41,7 @@
       </router-link>
 
       <!-- Déconnexion -->
-      <div class="logout-container" @click="toggleDropdown">
+      <div class="logout-container" ref="logoutRef" @click="toggleDropdown">
         <div class="nav-link logout-link">
           <i class="fas fa-sign-out-alt"></i>
           <span>Déconnexion</span>
@@ -69,9 +69,10 @@
           </div>
         </div>
       </div>
-    </div> <!-- FIN DE center-section -->
+    </div> <!-- FIN DE right-section -->
   </nav>
 </template>
+
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
@@ -84,7 +85,6 @@ const route = useRoute();
 const notifCount = ref(3);
 
 // Gérer le dropdown
-const dropdownVisible = ref(false);
 const showLogoutConfirm = ref(false);
 const logoutRef = ref(null);
 
@@ -104,12 +104,15 @@ onBeforeUnmount(() => {
 
 const handleOutsideClick = (e) => {
   if (logoutRef.value && !logoutRef.value.contains(e.target)) {
-    dropdownVisible.value = false;
+    showLogoutConfirm.value = false; // Ferme la popup si on clique en dehors
   }
 };
 
 const isActive = (path) => route.path === path;
-const toggleDropdown = () => (dropdownVisible.value = !dropdownVisible.value);
+
+const toggleDropdown = () => {
+  showLogoutConfirm.value = !showLogoutConfirm.value; // Bascule la visibilité de la popup
+};
 
 const navigateToHome = () => {
   router.push('/etudiant/accueil');
@@ -120,6 +123,7 @@ const logout = () => {
   router.push('/login');
 };
 </script>
+
 
 <style scoped>
 /* =======================
@@ -135,7 +139,7 @@ const logout = () => {
   color: #fff;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.2);
   height: 80px;       /* Hauteur fixe. Ajuster si nécessaire */
-  width: 100%;
+  width: 98%;
   position: fixed;
   top: 0;
   left: 0;
