@@ -63,6 +63,8 @@ public class SemestreService {
                 .map(semestre -> {
                     semestre.setDateDebutSemestre(updated.getDateDebutSemestre());
                     semestre.setDateFinSemestre(updated.getDateFinSemestre());
+                    semestre.setDateDebutDepot(updated.getDateDebutDepot());
+                    semestre.setDateFinDepot(updated.getDateFinDepot());
                     semestre.setNbSemestre(updated.getNbSemestre());
                     return semestreRepository.save(semestre);
                 })

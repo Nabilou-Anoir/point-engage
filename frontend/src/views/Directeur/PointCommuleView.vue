@@ -3,10 +3,6 @@
     <h2 class="title">Points cumulés</h2>
 
     <div class="filters">
-      <select v-model="selectedSemester" class="filter-select">
-        <option>Semestre 1</option>
-        <option>Semestre 2</option>
-      </select>
       <input
         type="text"
         v-model="searchQuery"
@@ -21,14 +17,14 @@
         <tr>
           <th @click="sortTable('name')">Nom</th>
           <th @click="sortTable('promotion')">Promotion</th>
-          <th @click="sortTable('points')">Total</th>
+          <th @click="sortTable('totalPoints')">Total</th>
         </tr>
         </thead>
         <tbody>
-        <tr v-for="student in paginatedStudents" :key="student.id">
+        <tr v-for="student in paginatedStudents" :key="student.etudiantId">
           <td>{{ student.name }}</td>
           <td>{{ student.promotion }}</td>
-          <td>{{ student.points }}</td>
+          <td>{{ student.totalPoints.toFixed(2) }}</td>
         </tr>
         </tbody>
       </table>
@@ -63,17 +59,19 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import axios from "axios";
 
-const studentsData = ref([]);
-const selectedSemester = ref("Semestre 1");
+const studentsList = ref([]);
+const selectedPromotion = ref("");
+const availablePromotions = ref([]);
 const searchQuery = ref("");
 const sortColumn = ref("name");
 const sortDirection = ref(1);
 const currentPage = ref(1);
 const itemsPerPage = 5;
 const showConfirmationPopup = ref(false);
+const baseURL = "http://localhost:8989/api";
 
 const sortTable = (column) => {
   if (sortColumn.value === column) {
@@ -82,26 +80,28 @@ const sortTable = (column) => {
     sortColumn.value = column;
     sortDirection.value = 1;
   }
-  studentsData.value = [...studentsData.value].sort((a, b) => {
-    if (a[column] > b[column]) return sortDirection.value;
-    if (a[column] < b[column]) return -sortDirection.value;
-    return 0;
-  });
 };
 
+const sortedStudents = computed(() => {
+  return [...studentsList.value].sort((a, b) => {
+    if (a[sortColumn.value] > b[sortColumn.value]) return sortDirection.value;
+    if (a[sortColumn.value] < b[sortColumn.value]) return -sortDirection.value;
+    return 0;
+  });
+});
+
 const filteredStudents = computed(() => {
-  return studentsData.value.filter((student) => {
+  return sortedStudents.value.filter((student) => {
     const query = searchQuery.value.toLowerCase();
-    return (
-      (student.name.toLowerCase().includes(query) ||
-        student.promotion.toLowerCase().includes(query)) &&
-      student.points > 0
-    );
+    const matchesPromotion = selectedPromotion.value ? student.promotion === selectedPromotion.value : true;
+    const matchesSearch = student.name.toLowerCase().includes(query) ||
+      student.promotion.toLowerCase().includes(query);
+    return matchesPromotion && matchesSearch;
   });
 });
 
 const totalPages = computed(() =>
-  Math.ceil(filteredStudents.value.length / itemsPerPage)
+  Math.max(1, Math.ceil(filteredStudents.value.length / itemsPerPage))
 );
 
 const paginatedStudents = computed(() => {
@@ -117,26 +117,77 @@ const nextPage = () => {
   if (currentPage.value < totalPages.value) currentPage.value++;
 };
 
-const fetchStudents = async () => {
+const processStudentData = (participations) => {
+  const studentMap = new Map();
+
+  participations.forEach(p => {
+    const studentId = p.etudiantId;
+    if (!studentMap.has(studentId)) {
+      studentMap.set(studentId, {
+        etudiantId: studentId,
+        name: p.name,
+        promotion: p.promotion,
+        totalPoints: 0,
+        participations: []
+      });
+    }
+
+    const student = studentMap.get(studentId);
+    let points = parseFloat(p.pointsAccordes || 0);
+    points = Math.min(points, 0.5);
+    student.totalPoints = Math.min(student.totalPoints + points, 0.5);
+    student.participations.push({
+      engagementType: p.engagementType,
+      actionType: p.actionType || "N/A",
+      pointsAccordes: points
+    });
+  });
+
+  studentsList.value = Array.from(studentMap.values());
+  availablePromotions.value = [...new Set(studentsList.value.map(s => s.promotion))];
+  sessionStorage.setItem("pointsCumules", JSON.stringify(studentsList.value));
+};
+
+const fetchDataFromAPI = async () => {
   try {
-    const response = await axios.get("/api/etudiants/allPoints");
-    studentsData.value = response.data.map((student) => ({
-      id: student.id,
-      name: `${student.nom} ${student.prenom}`,
-      promotion: student.promotion,
-      points: student.points,
+    const { data: participations } = await axios.get(`${baseURL}/participes`);
+    const enrichedParticipations = await Promise.all(participations.map(async (p) => {
+      try {
+        const [etudiant, action, referentiel] = await Promise.all([
+          axios.get(`${baseURL}/etudiants/${p.id.idEtudiant}`),
+          axios.get(`${baseURL}/actions/${p.id.idAction}`),
+          axios.get(`${baseURL}/referentiels/${p.idReferentiel || 1}`)
+        ]);
+
+        return {
+          etudiantId: etudiant.data.idEtudiant,
+          name: `${etudiant.data.prenom} ${etudiant.data.nom}`,
+          promotion: etudiant.data.promotion,
+          engagementType: referentiel.data.nom || "N/A",
+          actionType: action.data.nom,
+          pointsAccordes: parseFloat(p.pointAction || 0)
+        };
+      } catch (e) {
+        console.error("Erreur sur une participation:", e);
+        return null;
+      }
     }));
+
+    const validParticipations = enrichedParticipations.filter(Boolean);
+    processStudentData(validParticipations);
   } catch (error) {
-    console.error("Erreur lors de la récupération des étudiants :", error);
+    console.error("Erreur de chargement des données:", error);
+    studentsList.value = [];
   }
 };
 
-onMounted(() => {
-  fetchStudents();
-});
-
 const envoyerAuServiceScolarite = () => {
-  sessionStorage.setItem("elevesFiltres", JSON.stringify(filteredStudents.value));
+  const exportList = filteredStudents.value.map(eleve => ({
+    name: eleve.name,
+    promotion: eleve.promotion,
+    points: eleve.totalPoints.toFixed(2)
+  }));
+  sessionStorage.setItem("elevesFiltres", JSON.stringify(exportList));
   sessionStorage.setItem("isSent", "true");
   showConfirmationPopup.value = true;
 };
@@ -144,6 +195,20 @@ const envoyerAuServiceScolarite = () => {
 const closeConfirmation = () => {
   showConfirmationPopup.value = false;
 };
+
+onMounted(() => {
+  const participationsData = sessionStorage.getItem("participationsAttribuées");
+  if (participationsData) {
+    try {
+      const participations = JSON.parse(participationsData);
+      processStudentData(participations);
+    } catch {
+      fetchDataFromAPI();
+    }
+  } else {
+    fetchDataFromAPI();
+  }
+});
 </script>
 
 <style scoped src="./PointCommuleView.css"></style>

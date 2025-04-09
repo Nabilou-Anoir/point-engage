@@ -27,7 +27,6 @@
               <td>{{ eleve.name }}</td>
               <td>{{ eleve.promotion }}</td>
               <td class="align-right">
-                <!-- Affichage en lecture seule des points -->
                 <span>{{ eleve.points }}</span>
               </td>
             </tr>
@@ -51,12 +50,20 @@ const eleves = ref([]);
 const isSent = ref(false);
 
 onMounted(() => {
-  // Vérifie si l'envoi a eu lieu via le flag 'isSent'
-  if (sessionStorage.getItem("isSent") === "true") {
+  const sentFlag = sessionStorage.getItem("isSent");
+  const storedData = sessionStorage.getItem("elevesFiltres");
+
+  if (sentFlag === "true" && storedData) {
     isSent.value = true;
-    const storedData = sessionStorage.getItem("elevesFiltres");
-    if (storedData) {
-      eleves.value = JSON.parse(storedData);
+    try {
+      const parsed = JSON.parse(storedData);
+      eleves.value = parsed.map(eleve => ({
+        name: eleve.name,
+        promotion: eleve.promotion,
+        points: eleve.points
+      }));
+    } catch (e) {
+      console.error("Erreur de parsing des données envoyées:", e);
     }
   } else {
     isSent.value = false;

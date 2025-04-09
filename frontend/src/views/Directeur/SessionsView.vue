@@ -16,32 +16,47 @@
       <button class="btn-add" @click="openModal('add')">➕ Ajouter une session</button>
     </div>
 
+    <!-- 🗓️ Saisie des dates de dépôt globales -->
+    <div class="global-dates">
+      <label>Date début dépôt (global)</label>
+      <Datepicker v-model="globalDebutDepot" autoApply format="yyyy-MM-dd" />
+
+      <label>Date fin dépôt (global)</label>
+      <Datepicker v-model="globalFinDepot" autoApply format="yyyy-MM-dd" />
+
+      <button class="btn-confirm" @click="applyGlobalDates">📝 Appliquer à tous</button>
+    </div>
+
     <!-- 📌 Tableau des sessions -->
     <div class="table-wrapper">
       <table class="sessions-table">
         <thead>
-          <tr>
-            <th>Nom de la session</th>
-            <th>Date d'ouverture</th>
-            <th>Date de clôture</th>
-            <th>Actions</th>
-          </tr>
+        <tr>
+          <th>Nom de la session</th>
+          <th>Date d'ouverture</th>
+          <th>Date de clôture</th>
+          <th>Date début dépôt</th>
+          <th>Date fin dépôt</th>
+          <th>Actions</th>
+        </tr>
         </thead>
         <tbody>
-          <tr v-for="session in filteredSessions" :key="session.idSemestre">
-            <td>Session {{ session.nbSemestre }}</td>
-            <td>{{ formatDate(session.dateDebutSemestre) }}</td>
-            <td>{{ formatDate(session.dateFinSemestre) }}</td>
-            <td class="actions">
-              <span class="icon edit" @click="openModal('edit', session)">✏️</span>
-              <span class="icon delete" @click="deleteSession(session.idSemestre)">🗑️</span>
-            </td>
-          </tr>
+        <tr v-for="session in filteredSessions" :key="session.idSemestre">
+          <td>Session {{ session.nbSemestre }}</td>
+          <td>{{ formatDate(session.dateDebutSemestre) }}</td>
+          <td>{{ formatDate(session.dateFinSemestre) }}</td>
+          <td>{{ formatDate(session.dateDebutDepot) }}</td>
+          <td>{{ formatDate(session.dateFinDepot) }}</td>
+          <td class="actions">
+            <span class="icon edit" @click="openModal('edit', session)">✏️</span>
+            <span class="icon delete" @click="deleteSession(session.idSemestre)">🗑️</span>
+          </td>
+        </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- 🛠️ MODALE -->
+    <!-- 🛠️ MODALE pour ajouter/éditer une session -->
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-content">
         <h3>{{ modalType === 'add' ? '➕ Ajouter une session' : '✏️ Modifier la session' }}</h3>
@@ -82,6 +97,8 @@ const sessions = ref([]);
 const showModal = ref(false);
 const modalType = ref("add");
 const search = ref("");
+const globalDebutDepot = ref(null);
+const globalFinDepot = ref(null);
 const currentSession = ref({
   idSemestre: null,
   nbSemestre: "",
@@ -92,11 +109,7 @@ const currentSession = ref({
 const fetchSessions = async () => {
   try {
     const res = await axios.get(API_URL);
-    if (res.data._embedded && res.data._embedded.semestres) {
-      sessions.value = res.data._embedded.semestres;
-    } else {
-      sessions.value = res.data;
-    }
+    sessions.value = res.data._embedded?.semestres || res.data;
   } catch (err) {
     console.error("Erreur de chargement des sessions :", err);
   }
@@ -124,23 +137,39 @@ const closeModal = () => {
 };
 
 const saveSession = async () => {
-  if (!currentSession.value.nbSemestre || !currentSession.value.dateDebutSemestre || !currentSession.value.dateFinSemestre) {
+  const s = currentSession.value;
+  if (!s.nbSemestre || !s.dateDebutSemestre || !s.dateFinSemestre) {
     alert("🚨 Veuillez remplir tous les champs obligatoires !");
     return;
   }
-
   try {
     if (modalType.value === "add") {
-      const res = await axios.post(API_URL, currentSession.value);
+      const res = await axios.post(API_URL, s);
       sessions.value.push(res.data);
     } else {
-      await axios.put(`${API_URL}/${currentSession.value.idSemestre}`, currentSession.value);
-      const index = sessions.value.findIndex(s => s.idSemestre === currentSession.value.idSemestre);
-      if (index !== -1) sessions.value[index] = { ...currentSession.value };
+      await axios.put(`${API_URL}/${s.idSemestre}`, s);
+      const index = sessions.value.findIndex(sess => sess.idSemestre === s.idSemestre);
+      if (index !== -1) sessions.value[index] = { ...s };
     }
     closeModal();
   } catch (err) {
     console.error("Erreur lors de la sauvegarde :", err);
+  }
+};
+
+const applyGlobalDates = async () => {
+  if (!globalDebutDepot.value || !globalFinDepot.value) {
+    alert("Veuillez renseigner les deux dates de dépôt.");
+    return;
+  }
+  try {
+    for (const session of sessions.value) {
+      session.dateDebutDepot = globalDebutDepot.value;
+      session.dateFinDepot = globalFinDepot.value;
+      await axios.put(`${API_URL}/${session.idSemestre}`, session);
+    }
+  } catch (err) {
+    console.error("Erreur lors de l'application globale des dates :", err);
   }
 };
 
@@ -165,13 +194,13 @@ const formatDate = (date) => {
 
 const filteredSessions = computed(() => {
   if (!search.value) return sessions.value;
-
   const query = search.value.toLowerCase();
-
   return sessions.value.filter((s) =>
     (`${s.nbSemestre}`.includes(query) ||
-     formatDate(s.dateDebutSemestre).toLowerCase().includes(query) ||
-     formatDate(s.dateFinSemestre).toLowerCase().includes(query))
+      formatDate(s.dateDebutSemestre).toLowerCase().includes(query) ||
+      formatDate(s.dateFinSemestre).toLowerCase().includes(query) ||
+      formatDate(s.dateDebutDepot).toLowerCase().includes(query) ||
+      formatDate(s.dateFinDepot).toLowerCase().includes(query))
   );
 });
 </script>

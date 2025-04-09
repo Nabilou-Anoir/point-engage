@@ -25,62 +25,62 @@
     <div class="table-container">
       <table class="styled-table">
         <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Promotion</th>
-            <th>Engagement</th>
-            <th>Résumé</th>
-            <th>Validé</th>
-            <th>Points envisagés</th>
-            <th>Remarque référent</th>
-            <th>Points accordés</th>
-          </tr>
+        <tr>
+          <th>Nom</th>
+          <th>Promotion</th>
+          <th>Engagement</th>
+          <th>Résumé</th>
+          <th>Validé</th>
+          <th>Points envisagés</th>
+          <th>Remarque référent</th>
+          <th>Points accordés</th>
+        </tr>
         </thead>
         <tbody>
-          <tr v-for="student in filteredStudents" :key="student.etudiantId">
-            <td @click="openStudentModal(student)" style="cursor: pointer; color: blue">
-              {{ student.name }}
-            </td>
-            <td>{{ student.promotion }}</td>
-            <td>{{ student.engagementType }}</td>
-            <td>
-              <input type="text" v-model="student.resumeDirecteur" class="editable-input" />
-            </td>
-            <td>
-              <label class="custom-checkbox">
-                <input
-                  type="checkbox"
-                  :disabled="student.valide"
-                  @change="handleValidation(student)"
-                  class="hidden-checkbox"
-                />
-                <span class="checkmark"></span>
-              </label>
-            </td>
-            <td>
+        <tr v-for="student in filteredStudents" :key="student.etudiantId">
+          <td @click="openStudentModal(student)" style="cursor: pointer; color: blue">
+            {{ student.name }}
+          </td>
+          <td>{{ student.promotion }}</td>
+          <td>{{ student.engagementType }}</td>
+          <td>
+            <input type="text" v-model="student.resumeDirecteur" class="editable-input" />
+          </td>
+          <td>
+            <label class="custom-checkbox">
               <input
-                type="number"
-                v-model.number="student.nbPointsEnvisages"
-                min="0"
-                max="0.5"
-                step="0.01"
-                class="editable-input"
-                @input="limiterValeur(student, 'nbPointsEnvisages')"
+                type="checkbox"
+                :disabled="student.valide"
+                @change="handleValidation(student)"
+                class="hidden-checkbox"
               />
-            </td>
-            <td>{{ student.remarqueReferent }}</td>
-            <td>
-              <input
-                type="number"
-                v-model.number="student.pointsAccordes"
-                min="0"
-                max="0.5"
-                step="0.01"
-                class="editable-input"
-                @input="limiterValeur(student, 'pointsAccordes')"
-              />
-            </td>
-          </tr>
+              <span class="checkmark"></span>
+            </label>
+          </td>
+          <td>
+            <input
+              type="number"
+              v-model.number="student.nbPointsEnvisages"
+              min="0"
+              max="0.5"
+              step="0.01"
+              class="editable-input"
+              @input="limiterValeur(student, 'nbPointsEnvisages')"
+            />
+          </td>
+          <td>{{ student.remarqueReferent }}</td>
+          <td>
+            <input
+              type="number"
+              v-model.number="student.pointsAccordes"
+              min="0"
+              max="0.5"
+              step="0.01"
+              class="editable-input"
+              @input="limiterValeur(student, 'pointsAccordes')"
+            />
+          </td>
+        </tr>
         </tbody>
       </table>
     </div>
@@ -140,11 +140,17 @@ export default {
     },
   },
   mounted() {
-    this.loadData();
+    const cached = sessionStorage.getItem("participationsAttribuées");
+    if (cached) {
+      this.students = JSON.parse(cached);
+      this.availablePromotions = [...new Set(this.students.map(s => s.promotion))];
+    } else {
+      this.loadData();
+    }
   },
   watch: {
     $route() {
-      this.loadData(); // Recharge les données en revenant sur la page
+      this.loadData();
     },
   },
   methods: {
@@ -189,14 +195,15 @@ export default {
         console.error("Erreur de chargement des participations :", error);
       }
     },
+
     limiterValeur(student, champ) {
       student[champ] = Math.min(Math.max(0, parseFloat(student[champ] || 0)), 0.5).toFixed(2);
     },
+
     handleValidation(student) {
-      if (!student.valide) {
-        student.valide = true;
-      }
+      if (!student.valide) student.valide = true;
     },
+
     async validerEnvoi() {
       try {
         const results = await Promise.allSettled(
@@ -212,6 +219,7 @@ export default {
 
         const hasErrors = results.some((res) => res.status === "rejected");
         if (!hasErrors) {
+          sessionStorage.setItem("participationsAttribuées", JSON.stringify(this.students));
           this.showModal = true;
         } else {
           alert("Certaines données n'ont pas été envoyées.");
@@ -221,10 +229,12 @@ export default {
         alert("Erreur lors de l’envoi.");
       }
     },
+
     openStudentModal(student) {
       this.selectedStudent = student;
       this.isModalOpen = true;
     },
+
     closeModal() {
       this.isModalOpen = false;
     },

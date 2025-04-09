@@ -1,13 +1,11 @@
 <template>
   <div class="accueil-etudiant">
-    <!-- En-tête -->
     <div class="header">
-      <h1 v-if="studentLoaded">Bonjour, {{ student.prenom }} {{ student.nom }} </h1>
+      <h1 v-if="studentLoaded">Bonjour, {{ student.prenom }} {{ student.nom }}</h1>
       <h1 v-else>Bonjour !</h1>
       <p class="subtitle">Voici un aperçu de vos activités et participations.</p>
     </div>
 
-    <!-- Statistiques -->
     <div class="stats" v-if="studentLoaded">
       <div class="stat-card">
         <div class="stat-icon">
@@ -37,17 +35,33 @@
         </div>
       </div>
     </div>
-    <div class="stats" v-else>
-      <p>Chargement des informations...</p>
+
+    <div v-if="semestreDepot" class="stats">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-alt" style="color: #8E44AD;"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Début du dépôt de fiche</span>
+          <span class="stat-value">{{ formatDate(semestreDepot.dateDebutDepot) }}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-times" style="color: #C0392B;"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Fin du dépôt de fiche</span>
+          <span class="stat-value">{{ formatDate(semestreDepot.dateFinDepot) }}</span>
+        </div>
+      </div>
     </div>
 
-    <!-- Informations supplémentaires -->
     <div class="info">
       <p>Pour plus d’informations, cliquez sur le bouton ci-dessous.</p>
       <button @click="navigateToDispositif" class="modern-button">Cliquez ici !</button>
     </div>
 
-    <!-- Message de confidentialité -->
     <div class="privacy-message">
       <p>Vos données seront protégées et supprimées de nos serveurs dès que vous quitterez l'établissement.</p>
     </div>
@@ -58,70 +72,70 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
-// Références réactives pour les données de l'étudiant
 const student = ref(null);
 const totalPointsValides = ref(0);
 const nombreParticipations = ref(0);
 const nbFichesEnCours = ref(0);
 const studentLoaded = ref(false);
+const semestreDepot = ref(null);
 
 const STUDENT_API_URL = "http://localhost:8989/api/etudiants/byEmail";
 const PARTICIPATIONS_API_URL = "http://localhost:8989/api/participes/search/findByIdIdEtudiant";
+const SEMESTRE_API_URL = "http://localhost:8989/api/semestres";
 
 const router = useRouter();
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("fr-FR");
+};
 
 onMounted(async () => {
   const loggedInUser = sessionStorage.getItem("loggedInUser");
   if (loggedInUser) {
     const user = JSON.parse(loggedInUser);
-    console.log("🟢 Utilisateur connecté:", user);
     try {
-      // Récupération de l'étudiant par email
       const studentResponse = await fetch(`${STUDENT_API_URL}?email=${encodeURIComponent(user.email)}`);
-      if (!studentResponse.ok) {
-        throw new Error("Erreur lors du chargement de l’étudiant");
-      }
       const studentData = await studentResponse.json();
       student.value = studentData;
 
-      // Récupération des participations
-      const participationsResponse = await fetch(`${PARTICIPATIONS_API_URL}?idEtudiant=${student.value.idEtudiant}`);
-      if (!participationsResponse.ok) {
-        throw new Error("Erreur lors du chargement des participations");
-      }
-      const participationsData = await participationsResponse.json();
-      const participations = participationsData._embedded?.participes || [];
+      const partRes = await fetch(`${PARTICIPATIONS_API_URL}?idEtudiant=${studentData.idEtudiant}`);
+      const partData = await partRes.json();
+      const participations = partData._embedded?.participes || [];
 
-      let sumPoints = 0;
-      let countEnCours = 0;
-      participations.forEach((item) => {
-        if (item.statut === true && item.totalPoints) {
-          sumPoints += item.totalPoints;
-        }
-        if (item.statut === null) {
-          countEnCours++;
-        }
-      });
+      let sumPoints = 0, countEnCours = 0;
+      for (const p of participations) {
+        if (p.statut === true && p.totalPoints) sumPoints += p.totalPoints;
+        if (p.statut === null) countEnCours++;
+      }
 
       totalPointsValides.value = sumPoints;
       nombreParticipations.value = participations.length;
       nbFichesEnCours.value = countEnCours;
       studentLoaded.value = true;
-    } catch (error) {
-      console.error("Erreur lors du chargement des informations de l'étudiant :", error);
+
+      const semestresRes = await fetch(SEMESTRE_API_URL);
+      if (semestresRes.ok) {
+        const semestres = await semestresRes.json();
+        const list = semestres._embedded?.semestres || semestres;
+        if (list.length) {
+          list.sort((a, b) => new Date(b.dateDebutSemestre) - new Date(a.dateDebutSemestre));
+          semestreDepot.value = list[0];
+        }
+      }
+    } catch (e) {
+      console.error("Erreur lors du chargement :", e);
     }
-  } else {
-    console.error("Aucun utilisateur connecté trouvé !");
   }
 });
 
-// Fonction de navigation vers la vue Dispositif
 const navigateToDispositif = () => {
   router.push('/etudiant/dispositif');
 };
 </script>
 
-<style scoped>
+<style scoped >
 .accueil-etudiant {
   padding: 40px 20px;
   font-family: 'Inter', sans-serif;
@@ -193,8 +207,9 @@ const navigateToDispositif = () => {
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 700;
+  color: #333;
 }
 
 /* Informations supplémentaires */

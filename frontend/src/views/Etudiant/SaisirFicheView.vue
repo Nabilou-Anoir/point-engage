@@ -28,12 +28,14 @@
             S{{ sem.nbSemestre }}
           </option>
         </select>
+        <p v-if="!isDepotOuvert" class="depot-ferme-msg">
+          ❌ Le délai de dépôt est dépassé pour ce semestre.
+        </p>
       </div>
 
       <!-- Sélection du référentiel -->
       <div class="form-group">
         <label>Référentiel <span class="required">*</span></label>
-        <!-- Utilisation de v-model.number pour forcer la conversion en nombre -->
         <select v-model.number="fiche.referentiel" required>
           <option disabled value="">-- Sélectionnez un référentiel --</option>
           <option v-for="ref in referentiels" :key="ref.idReferentiel" :value="ref.idReferentiel">
@@ -70,7 +72,7 @@
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="btn-submit">Envoyer</button>
+        <button type="submit" class="btn-submit" :disabled="!isDepotOuvert">Envoyer</button>
         <button type="button" class="btn-cancel" @click="annuler">Annuler</button>
       </div>
     </form>
@@ -105,90 +107,71 @@ export default {
   name: 'SaisirFicheView',
   data() {
     return {
-      // Informations de l'étudiant connecté
-      etudiant: {
-        idEtudiant: null,
-        nom: '',
-        prenom: ''
-      },
-      // Données du formulaire
-      fiche: {
-        semestre: '',
-        referentiel: '', // Cette valeur correspondra à l'id du référentiel choisi
-        action: '',
-        dateDebut: '',
-        dateFin: '',
-        description: ''
-      },
-      // Listes pour les menus déroulants
+      etudiant: { idEtudiant: null, nom: '', prenom: '' },
+      fiche: { semestre: '', referentiel: '', action: '', dateDebut: '', dateFin: '', description: '' },
       semestres: [],
       referentiels: [],
       actions: [],
-      // Variables pour la popup de confirmation
       showPopup: false,
       popupMessage: '',
-      submissionSuccess: false
+      submissionSuccess: false,
+      isDepotOuvert: true
     };
   },
   created() {
-    // Récupération de l'utilisateur connecté depuis le sessionStorage
     const storedUser = sessionStorage.getItem('loggedInUser');
     if (storedUser) {
       const user = JSON.parse(storedUser);
-      if (user.email) {
-        this.getEtudiantByEmail(user.email);
-      } else {
-        console.log('Aucun email trouvé dans loggedInUser.');
-      }
-    } else {
-      console.log('Aucun utilisateur connecté dans sessionStorage.');
+      if (user.email) this.getEtudiantByEmail(user.email);
     }
     this.getSemestres();
     this.getReferentiels();
     this.getActions();
   },
+  watch: {
+    'fiche.semestre'(id) {
+      const s = this.semestres.find(sem => sem.idSemestre === id);
+      if (s && s.dateDebutDepot && s.dateFinDepot) {
+        const now = new Date();
+        this.isDepotOuvert = now >= new Date(s.dateDebutDepot) && now <= new Date(s.dateFinDepot);
+      } else {
+        this.isDepotOuvert = true;
+      }
+    }
+  },
   methods: {
     getEtudiantByEmail(email) {
       const url = `http://localhost:8989/api/etudiants/byEmail?email=${encodeURIComponent(email)}`;
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.idEtudiant) {
-            this.etudiant.idEtudiant = data.idEtudiant;
-            this.etudiant.nom = data.nom;
-            this.etudiant.prenom = data.prenom;
-          } else {
-            console.log('Aucun étudiant trouvé pour l\'email:', email);
-          }
-        })
-        .catch(err => console.log('Erreur récupération étudiant par email:', err));
+      fetch(url).then(res => res.json()).then(data => {
+        if (data?.idEtudiant) {
+          this.etudiant.idEtudiant = data.idEtudiant;
+          this.etudiant.nom = data.nom;
+          this.etudiant.prenom = data.prenom;
+        }
+      });
     },
     getSemestres() {
       fetch('http://localhost:8989/api/semestres')
         .then(res => res.json())
-        .then(data => {
-          this.semestres = data;
-        })
-        .catch(err => console.log('Erreur semestres:', err));
+        .then(data => { this.semestres = data; });
     },
     getReferentiels() {
       fetch('http://localhost:8989/api/referentiels')
         .then(res => res.json())
-        .then(data => {
-          this.referentiels = data;
-        })
-        .catch(err => console.log('Erreur référentiels:', err));
+        .then(data => { this.referentiels = data; });
     },
     getActions() {
       fetch('http://localhost:8989/api/actions')
         .then(res => res.json())
-        .then(data => {
-          this.actions = data;
-        })
-        .catch(err => console.log('Erreur actions:', err));
+        .then(data => { this.actions = data; });
     },
     submitForm() {
-      // Vérification de la cohérence des dates
+      if (!this.isDepotOuvert) {
+        this.popupMessage = "Le délai de dépôt est dépassé. Vous ne pouvez plus soumettre de fiche pour ce semestre.";
+        this.showPopup = true;
+        this.submissionSuccess = false;
+        return;
+      }
       if (new Date(this.fiche.dateDebut) > new Date(this.fiche.dateFin)) {
         this.popupMessage = "La date de début doit être antérieure à la date de fin.";
         this.showPopup = true;
@@ -202,10 +185,6 @@ export default {
         return;
       }
 
-      // Log de débogage pour vérifier la valeur du référentiel sélectionné
-      console.log("Valeur sélectionnée pour le référentiel:", this.fiche.referentiel);
-
-      // Construction du payload avec le champ idReferentiel
       const participationPayload = {
         etudiant: { idEtudiant: this.etudiant.idEtudiant },
         action: { idAction: Number(this.fiche.action) },
@@ -229,17 +208,14 @@ export default {
           this.popupMessage = "Votre engagement fait la différence ! Participation créée avec succès.";
           this.showPopup = true;
           this.submissionSuccess = true;
-          console.log('Participation envoyée:', participationPayload);
         })
-        .catch(err => {
-          console.log(err);
+        .catch(() => {
           this.popupMessage = "Une erreur est survenue lors de l’envoi de la fiche.";
           this.showPopup = true;
           this.submissionSuccess = false;
         });
     },
     annuler() {
-      // Réinitialisation des champs du formulaire, tout en gardant les infos de l'étudiant
       this.fiche.semestre = '';
       this.fiche.referentiel = '';
       this.fiche.action = '';
@@ -378,6 +354,19 @@ textarea {
   min-height: 120px;
 }
 
+/* Message délai dépassé */
+.depot-ferme-msg {
+  background: #ffe0e0;
+  color: #c0392b;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 12px;
+  display: inline-block;
+  box-shadow: 0 0 0 1px #f3c0c0;
+}
+
 /* Boutons */
 .fiche-form .form-actions,
 .btn-group {
@@ -500,12 +489,6 @@ button {
 
 .btn-close:active, .btn-download:active {
   transform: translateY(0);
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideIn {

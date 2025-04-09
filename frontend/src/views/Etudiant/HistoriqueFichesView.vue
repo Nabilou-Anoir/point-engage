@@ -3,7 +3,7 @@
     <h1>Historique des fiches</h1>
 
     <p v-if="etudiant">
-      <strong>Étudiant connecté :</strong> {{ etudiant.nom }} {{ etudiant.prenom }}
+      <strong>étudiant connecté :</strong> {{ etudiant.nom }} {{ etudiant.prenom }}
     </p>
 
     <div class="search-filter">
@@ -32,7 +32,6 @@
           :key="`${item.id.idEtudiant}-${item.id.idAction}-${item.id.idSemestre}`"
           class="table-row"
         >
-          <!-- En cliquant sur le nom de l'action, on ouvre le popup de détails -->
           <td @click="showActionPopup(item)" class="activity-name">
             {{ item.action?.nom || 'N/A' }}
           </td>
@@ -46,7 +45,6 @@
             <span class="points">{{ item.totalPoints || 0 }} pts</span>
           </td>
           <td class="text-right">
-            <!-- Bouton "Suivre" conserve son libellé et ouvre le popup de suivi -->
             <button class="btn-suivre" @click.stop="showSuiviPopup(item)">Suivre</button>
           </td>
         </tr>
@@ -67,17 +65,17 @@
       </button>
     </div>
 
-    <!-- Popup pour afficher les détails de l'action -->
+    <!-- Popup pour afficher les d\u00e9tails de l'action -->
     <div v-if="actionPopupVisible" class="modal-overlay">
       <div class="modal-content">
-        <h2>Détails de l'Action</h2>
+        <h2>Details de l'Action</h2>
         <p>
           <strong>Nom de l'action :</strong>
           {{ selectedAction?.action?.nom || 'N/A' }}
         </p>
         <p>
           <strong>Description de la participation :</strong>
-          {{ selectedAction?.descriptionParticipation || 'Aucune description renseignée' }}
+          {{ selectedAction?.descriptionParticipation || 'Aucune description renseign\u00e9e' }}
         </p>
         <p>
           <strong>Date de saisie :</strong>
@@ -93,14 +91,9 @@
     <div v-if="suiviVisible" class="modal-overlay">
       <div class="modal-content">
         <h2>Suivi de la Participation</h2>
-        <!-- Ici, affichez l'évolution du suivi de la fiche (soumission, validation, etc.) -->
-        <p>
-          <strong>Action :</strong> {{ selectedSuivi?.action?.nom || 'N/A' }}
-        </p>
-        <p>
-          <strong>Date de Réalisation :</strong> {{ formatDate(selectedSuivi?.dateDebutParticipation) }}
-        </p>
-        <!-- Ajoutez d'autres éléments d'évolution de suivi ici selon vos besoins -->
+        <p><strong>Action :</strong> {{ selectedSuivi?.action?.nom || 'N/A' }}</p>
+        <p><strong>Date de Réalisation :</strong> {{ formatDate(selectedSuivi?.dateDebutParticipation) }}</p>
+        <p><strong>Remarque Référent :</strong> {{ selectedSuivi?.remarqueReferent || 'Aucune remarque' }}</p>
         <button class="modal-close-button" @click="suiviVisible = false">
           Fermer
         </button>
@@ -118,7 +111,6 @@ const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(5);
 
-// États pour les deux popups
 const selectedAction = ref(null);
 const actionPopupVisible = ref(false);
 const selectedSuivi = ref(null);
@@ -128,15 +120,12 @@ const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
 
 async function getHistorique() {
   if (!loggedInUser?.email) return;
-  // Récupération de l'étudiant par email
   const etuRes = await fetch(`http://localhost:8989/api/etudiants/byEmail?email=${loggedInUser.email}`);
   const etudiantData = await etuRes.json();
   etudiant.value = etudiantData;
-  // Récupération des participations associées à l'étudiant
   const partRes = await fetch(`http://localhost:8989/api/participes/search/findByIdIdEtudiant?idEtudiant=${etudiantData.idEtudiant}`);
   const data = await partRes.json();
   const participations = data._embedded?.participes || [];
-  // Pour chaque participation, récupérer l'action et le semestre
   for (const item of participations) {
     const actionRes = await fetch(`http://localhost:8989/api/actions/${item.id.idAction}`);
     const semRes = await fetch(`http://localhost:8989/api/semestres/${item.id.idSemestre}`);
@@ -173,13 +162,11 @@ function prevPage() {
   if (currentPage.value > 1) currentPage.value--;
 }
 
-// Ouvre le popup de détails de l'action
 function showActionPopup(item) {
   selectedAction.value = item;
   actionPopupVisible.value = true;
 }
 
-// Ouvre le popup de suivi
 function showSuiviPopup(item) {
   selectedSuivi.value = item;
   suiviVisible.value = true;
@@ -187,6 +174,7 @@ function showSuiviPopup(item) {
 
 onMounted(getHistorique);
 </script>
+
 
 <style scoped>
 .activities-container {

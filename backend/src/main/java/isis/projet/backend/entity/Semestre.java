@@ -38,6 +38,12 @@ public class Semestre {
     @Column(name = "anneeUniversitaire")
     private  Date anneeUniversitaire;
 
+    @Column(name = "dateDebutDepot")
+    private Date dateDebutDepot;
+
+    @Column(name = "dateFinDepot")
+    private Date dateFinDepot;
+
     /**
      * Un semestre peut regrouper plusieurs participations.
      * Ce côté est le "managed" pour la relation semestre-participations.

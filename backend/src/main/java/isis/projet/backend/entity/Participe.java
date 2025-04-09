@@ -84,7 +84,7 @@ public class Participe {
     private String remarqueReferent;
 
     @Column(name="pointAction")
-    private String pointAction;
+    private BigDecimal pointAction;
 
     @Column(name = "id_referentiel")
     private Long idReferentiel;
