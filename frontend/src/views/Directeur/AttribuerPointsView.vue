@@ -1,8 +1,8 @@
 <template>
   <div class="main-content">
-    <h1 class="title">Attribution des points</h1>
+    <h1 class="title">Accueil Référent</h1>
 
-    <!-- 📅 Filtres -->
+    <!-- 🎯 Filtres -->
     <div class="filters">
       <div class="filter-group">
         <label>Date début</label>
@@ -21,14 +21,14 @@
       </div>
     </div>
 
-    <!-- 📊 Tableau -->
+    <!-- 📋 Tableau -->
     <div class="table-container">
       <table class="styled-table">
         <thead>
           <tr>
             <th>Nom</th>
             <th>Promotion</th>
-            <th>Type engagement</th>
+            <th>Engagement</th>
             <th>Résumé</th>
             <th>Validé</th>
             <th>Points envisagés</th>
@@ -85,23 +85,22 @@
       </table>
     </div>
 
-    <!-- 📩 Bouton d’envoi -->
+    <!-- ✅ Bouton -->
     <div class="button-container">
       <button class="btn-submit" @click="validerEnvoi">
-        Envoyer au service de scolarité
+        Enregistrer
       </button>
     </div>
 
-    <!-- ✅ Modale de confirmation -->
+    <!-- ✅ Confirmation -->
     <div v-if="showModal" class="modal-overlay">
       <div class="modal">
-        <h3> Accès activé !</h3>
-        <p>Le service de scolarité peut maintenant visualiser les fiches avec les points attribués.</p>
-        <button class="modal-btn" @click="showModal = false">OK</button>
+        <h3>Données enregistrées</h3>
+        <button class="modal-btn" @click="showModal = false">Fermer</button>
       </div>
     </div>
 
-    <!-- 🔍 Modale de détails étudiant -->
+    <!-- 🔥 Modale d'infos étudiant -->
     <div v-if="isModalOpen" class="modal-overlay">
       <div class="modal">
         <span class="modal-close" @click="closeModal">&times;</span>
@@ -130,38 +129,47 @@ export default {
       showModal: false,
       isModalOpen: false,
       selectedStudent: null,
+      baseURL: "http://localhost:8989/api",
     };
   },
   computed: {
     filteredStudents() {
-      return this.students.filter((student) =>
-        this.selectedPromotion ? student.promotion === this.selectedPromotion : true
+      return this.students.filter((s) =>
+        this.selectedPromotion ? s.promotion === this.selectedPromotion : true
       );
     },
   },
-  async mounted() {
-    try {
-      const res = await axios.get("http://localhost:8989/api/participes");
-      const participations = res.data.filter(p => p.statut === false || p.statut === null);
+  mounted() {
+    this.loadData();
+  },
+  watch: {
+    $route() {
+      this.loadData(); // Recharge les données en revenant sur la page
+    },
+  },
+  methods: {
+    async loadData() {
+      try {
+        const { data: participations } = await axios.get(`${this.baseURL}/participes`);
+        const filtered = participations.filter(p => p.pointAction === null);
 
-      const studentList = await Promise.all(
-        participations.map(async (p) => {
+        const studentList = await Promise.all(filtered.map(async (p) => {
           try {
             const [etudiant, action, semestre, referentiel] = await Promise.all([
-              axios.get(`http://localhost:8989/api/etudiants/${p.id.idEtudiant}`),
-              axios.get(`http://localhost:8989/api/actions/${p.id.idAction}`),
-              axios.get(`http://localhost:8989/api/semestres/${p.id.idSemestre}`),
-              axios.get(`http://localhost:8989/api/referentiels/${p.idReferentiel || 1}`),
+              axios.get(`${this.baseURL}/etudiants/${p.id.idEtudiant}`),
+              axios.get(`${this.baseURL}/actions/${p.id.idAction}`),
+              axios.get(`${this.baseURL}/semestres/${p.id.idSemestre}`),
+              axios.get(`${this.baseURL}/referentiels/${p.idReferentiel || 1}`),
             ]);
 
             return {
-              name: etudiant.data.prenom + " " + etudiant.data.nom,
+              name: `${etudiant.data.prenom} ${etudiant.data.nom}`,
               promotion: etudiant.data.promotion,
-              engagementType: referentiel.data.nom || "Non défini",
+              engagementType: referentiel.data.nom || "N/A",
               actionType: action.data.nom,
               description: p.descriptionParticipation,
               resumeDirecteur: p.resumeDirecteur || "",
-              remarqueReferent: p.remarqueReferent || "", // affichée seulement
+              remarqueReferent: p.remarqueReferent || "",
               nbPointsEnvisages: p.nbPointsAttribue || 0,
               pointsAccordes: p.pointAction || 0,
               valide: p.statut ?? false,
@@ -173,22 +181,44 @@ export default {
             console.error("Erreur sur une participation :", e);
             return null;
           }
-        })
-      );
+        }));
 
-      this.students = studentList.filter(Boolean);
-      this.availablePromotions = [...new Set(this.students.map((s) => s.promotion))];
-    } catch (error) {
-      console.error("Erreur de chargement des données :", error);
-    }
-  },
-  methods: {
+        this.students = studentList.filter(Boolean);
+        this.availablePromotions = [...new Set(this.students.map(s => s.promotion))];
+      } catch (error) {
+        console.error("Erreur de chargement des participations :", error);
+      }
+    },
     limiterValeur(student, champ) {
       student[champ] = Math.min(Math.max(0, parseFloat(student[champ] || 0)), 0.5).toFixed(2);
     },
     handleValidation(student) {
       if (!student.valide) {
-        student.valide = true; // empêcher décochage
+        student.valide = true;
+      }
+    },
+    async validerEnvoi() {
+      try {
+        const results = await Promise.allSettled(
+          this.students.map((student) =>
+            axios.put(`${this.baseURL}/participes/${student.etudiantId}/${student.actionId}/${student.semestreId}`, {
+              statut: student.valide,
+              nbPointsAttribue: student.nbPointsEnvisages,
+              pointAction: student.pointsAccordes,
+              resumeDirecteur: student.resumeDirecteur,
+            })
+          )
+        );
+
+        const hasErrors = results.some((res) => res.status === "rejected");
+        if (!hasErrors) {
+          this.showModal = true;
+        } else {
+          alert("Certaines données n'ont pas été envoyées.");
+        }
+      } catch (e) {
+        console.error("Erreur d’envoi :", e);
+        alert("Erreur lors de l’envoi.");
       }
     },
     openStudentModal(student) {
@@ -197,32 +227,6 @@ export default {
     },
     closeModal() {
       this.isModalOpen = false;
-    },
-    async validerEnvoi() {
-      try {
-        const results = await Promise.allSettled(
-          this.students.map((student) =>
-            axios.put(`http://localhost:8989/api/participes/${student.etudiantId}/${student.actionId}/${student.semestreId}`, {
-              statut: student.valide,
-              nbPointsAttribue: student.nbPointsEnvisages,
-              pointAction: student.pointsAccordes,
-              resumeDirecteur: student.resumeDirecteur,
-              // remarqueReferent : non modifiable donc pas envoyé
-            })
-          )
-        );
-
-        const hasErrors = results.some((res) => res.status === "rejected");
-        if (hasErrors) {
-          console.warn("Certaines requêtes ont échoué :", results.filter(r => r.status === "rejected"));
-          alert("Certaines données n'ont pas pu être envoyées.");
-        } else {
-          this.showModal = true;
-        }
-      } catch (e) {
-        console.error("Erreur globale d’envoi :", e);
-        alert("Erreur d’envoi.");
-      }
     },
   },
 };
