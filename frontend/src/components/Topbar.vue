@@ -8,7 +8,7 @@
     <!-- Section centrale : Liens de navigation -->
     <div class="center-section">
       <!-- Liens communs -->
-      <router-link to="/" class="nav-link" :class="{ active: isActive('/') }">
+      <router-link to="/directeur/accueil" class="nav-link" :class="{ active: isActive('/') }">
         <i class="fas fa-home"></i>
         <span>Accueil</span>
       </router-link>
@@ -68,21 +68,30 @@
           <i class="fas fa-sign-out-alt"></i>
           <span>Déconnexion</span>
         </div>
-        <!-- Affichage dynamique de l'e-mail -->
-        <span class="user-email">{{ userData.email }}</span>
-        <!-- Menu déroulant (optionnel) -->
-        <div v-if="dropdownVisible" class="dropdown-menu">
-          <router-link to="/settings" class="dropdown-item">
-            <i class="fas fa-cog"></i>
-            <span>Paramètres</span>
-          </router-link>
-          <router-link to="/logout" class="dropdown-item">
-            <i class="fas fa-sign-out-alt"></i>
-            <span>Déconnexion</span>
-          </router-link>
+        <!-- Menu déroulant (popup de confirmation) -->
+        <div
+          v-if="showLogoutConfirm"
+          class="popup-overlay"
+          @click.self="showLogoutConfirm = false">
+          <div class="popup-box" @click.stop>
+            <div class="popup-icon">
+              <i class="fas fa-question-circle"></i>
+            </div>
+            <p class="popup-message">
+              Êtes-vous sûr de vouloir vous déconnecter ?
+            </p>
+            <div class="popup-buttons">
+              <button class="btn-cancel" @click.stop="showLogoutConfirm = false">
+                Annuler
+              </button>
+              <button class="btn-confirm" @click="logout">
+                Oui, déconnexion
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </div> <!-- FIN DE center-section -->
   </nav>
 </template>
 
@@ -95,74 +104,62 @@ const notifCount = ref(3);
 
 // Données de l'utilisateur
 const userData = ref({
-  name: 'Adrien Defossez', // Valeur par défaut
-  email: 'adrien.defossez@univ-jfc.fr', // Valeur par défaut
-  profileImage: '', // Optionnel
+  name: 'Adrien Defossez',
+  email: 'adrien.defossez@univ-jfc.fr',
+  profileImage: '',
 });
 
-// Gestion du menu déroulant
-const dropdownVisible = ref(false);
+// Popup déconnexion
+const showLogoutConfirm = ref(false);
 const toggleDropdown = () => {
-  dropdownVisible.value = !dropdownVisible.value;
+  showLogoutConfirm.value = !showLogoutConfirm.value;
 };
 
-// Vérifier si un lien est actif
+// Redirection
 const route = useRoute();
-const isActive = (path) => {
-  return route.path === path;
-};
+const router = useRouter();
 
-// Récupérer le rôle de l'utilisateur
+const isActive = (path) => route.path === path;
+
+// Rôle utilisateur selon l’URL
 const userRole = computed(() => {
-  // Supposons que le rôle est stocké dans la route ou dans un store
-  return route.path.startsWith('/directeur') ? 'directeur' : 
-         route.path.startsWith('/scolarite') ? 'scolarite' : 
-         route.path.startsWith('/referent') ? 'referent' : 
+  return route.path.startsWith('/directeur') ? 'directeur' :
+         route.path.startsWith('/scolarite') ? 'scolarite' :
+         route.path.startsWith('/referent') ? 'referent' :
          'etudiant';
 });
 
-// Mettre à jour userData en fonction du rôle
-watch(
-  () => userRole.value,
-  (newRole) => {
-    if (newRole === 'etudiant') {
-      userData.value = {
-        name: 'Ines Gribaa',
-        email: 'ines.gribaa@univ-jfc.fr',
-        profileImage: '',
-      };
-    } else if (newRole === 'referent') {
-      userData.value = {
-        name: 'Référent',
-        email: 'referent@univ-jfc.fr',
-        profileImage: '',
-      };
-    } else {
-      userData.value = {
-        name: 'Adrien Defossez',
-        email: 'adrien.defossez@univ-jfc.fr',
-        profileImage: '',
-      };
-    }
-  },
-  { immediate: true } // Exécuter immédiatement au chargement
-);
-
-// Rediriger vers l'accueil approprié
-const router = useRouter();
-const navigateToHome = () => {
-  if (userRole.value === 'etudiant') {
-    router.push('/etudiant/accueil');
-  } else if (userRole.value === 'referent') {
-    router.push('/referent/accueil');
+// Mise à jour du userData selon le rôle
+watch(() => userRole.value, (newRole) => {
+  if (newRole === 'etudiant') {
+    userData.value = {
+      name: 'Ines Gribaa',
+      email: 'ines.gribaa@univ-jfc.fr',
+      profileImage: '',
+    };
+  } else if (newRole === 'referent') {
+    userData.value = {
+      name: 'Référent',
+      email: 'referent@univ-jfc.fr',
+      profileImage: '',
+    };
   } else {
-    router.push('/directeur/accueil');
+    userData.value = {
+      name: 'Adrien Defossez',
+      email: 'adrien.defossez@univ-jfc.fr',
+      profileImage: '',
+    };
   }
+}, { immediate: true });
+
+const logout = () => {
+  // Logique de déconnexion ici (ex : suppression token, redirection, etc.)
+  console.log('Déconnecté');
+  router.push('/');
 };
 </script>
 
 <style scoped>
-/* Styles globaux */
 .topbar {
   display: flex;
   align-items: center;
@@ -240,51 +237,159 @@ const navigateToHome = () => {
   100% { transform: scale(1); }
 }
 
-.user-email {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: -2px;
-  margin-left: 15px;
-}
-
 .logout-container {
   position: relative;
   cursor: pointer;
 }
 
-.dropdown-menu {
+.popup-overlay {
   position: absolute;
   top: 100%;
   right: 0;
-  background-color: #6A3FA0;
-  border-radius: 6px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.6);
+  width: 250px;
   padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-radius: 8px;
   z-index: 1001;
 }
 
-.dropdown-item {
-  color: white;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.95rem;
-  padding: 8px 12px;
-  border-radius: 4px;
-  transition: background 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.popup-box {
+  background-color: white;
+  color: black;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
 }
 
-.dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.2);
+.popup-icon {
+  font-size: 2rem;
+  color: #6A3FA0;
+  margin-bottom: 10px;
+}
+
+.popup-message {
+  margin-bottom: 12px;
+}
+
+.popup-buttons {
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
+}
+
+.btn-cancel,
+.btn-confirm {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background-color: #ccc;
+}
+
+.btn-confirm {
+  background-color: #D7443A;
+  color: white;
 }
 
 /* Icônes Font Awesome */
 .fas {
   font-size: 1.2rem;
 }
+/* =======================
+   Popup de déconnexion
+   ======================= */
+
+   .popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.popup-box {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.popup-icon {
+  font-size: 2.5rem;
+  color: #6a3fa0;
+  margin-bottom: 20px;
+}
+
+.popup-message {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #7f56d9, #5f99ae);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel {
+  background: linear-gradient(135deg, #ed6962, #c0392b);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-confirm:hover,
+.btn-cancel:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-confirm:active,
+.btn-cancel:active {
+  transform: translateY(0);
+}
+
 </style>
