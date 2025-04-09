@@ -135,7 +135,7 @@ export default {
   async mounted() {
     try {
       const participationsRes = await axios.get('http://localhost:8989/api/participes');
-      const participations = participationsRes.data.filter(p => p.statut === false || p.statut === null);
+      const participations = participationsRes.data.filter(p => p.pointAction === null);
 
       const studentList = await Promise.all(participations.map(async (p) => {
         try {
