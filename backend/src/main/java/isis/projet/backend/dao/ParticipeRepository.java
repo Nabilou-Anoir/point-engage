@@ -28,4 +28,8 @@ public interface ParticipeRepository extends JpaRepository<Participe, ParticipeK
 
     @Query("SELECT p FROM Participe p WHERE p.id.idSemestre = :idSemestre")
     List<Participe> findByIdIdSemestre(@Param("idSemestre") Integer idSemestre);
+
+    @Query("SELECT p FROM Participe p WHERE p.semestre.nbSemestre = :nbSemestre AND FUNCTION('YEAR', p.semestre.anneeUniversitaire) = :year")
+    List<Participe> findBySemestreAndYear(@Param("nbSemestre") Integer nbSemestre,
+                                          @Param("year") Integer year);
 }

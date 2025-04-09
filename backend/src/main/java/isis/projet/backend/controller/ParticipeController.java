@@ -2,6 +2,7 @@ package isis.projet.backend.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import isis.projet.backend.dao.ParticipeRepository;
 import isis.projet.backend.entity.Participe;
 import isis.projet.backend.entity.ParticipeKey;
 import isis.projet.backend.service.ParticipeService;
@@ -20,6 +21,7 @@ import jakarta.validation.Valid;
 public class ParticipeController {
 
     private final ParticipeService participeService;
+    private final ParticipeRepository participeRepository;
 
     @Operation(summary = "Récupérer toutes les participations")
     @GetMapping
@@ -98,6 +100,15 @@ public class ParticipeController {
     @GetMapping("/etudiant/{idEtudiant}")
     public ResponseEntity<List<Participe>> getParticipationsByEtudiant(@PathVariable Integer idEtudiant) {
         List<Participe> participes = participeService.getParticipationsByEtudiant(idEtudiant);
+        return ResponseEntity.ok(participes);
+    }
+
+    @Operation(summary = "Récupérer les participations par année universitaire et semestre")
+    @GetMapping("/byYearAndSemestre")
+    public ResponseEntity<List<Participe>> getParticipationsByYearAndSemestre(
+            @RequestParam Integer year,
+            @RequestParam Integer semestre) {
+        List<Participe> participes = participeRepository.findBySemestreAndYear(semestre, year);
         return ResponseEntity.ok(participes);
     }
 }

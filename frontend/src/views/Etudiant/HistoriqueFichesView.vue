@@ -3,14 +3,14 @@
     <h1>Historique des fiches</h1>
 
     <p v-if="etudiant">
-      <strong>Etudiant connecté :</strong> {{ etudiant.nom }} {{ etudiant.prenom }}
+      <strong>Étudiant connecté :</strong> {{ etudiant.nom }} {{ etudiant.prenom }}
     </p>
 
     <div class="search-filter">
       <input
         type="text"
         v-model="searchQuery"
-        placeholder="Rechercher par nom d'activité"
+        placeholder="Rechercher par nom d'action"
         class="search-input"
       />
     </div>
@@ -19,10 +19,10 @@
       <table class="activities-table">
         <thead>
         <tr>
-          <th>Activité</th>
+          <th>Action</th>
           <th>Date de Réalisation</th>
           <th class="text-right">Statut</th>
-          <th class="text-right">Points</th>
+          <th class="text-right">Total Points</th>
           <th class="text-right">Actions</th>
         </tr>
         </thead>
@@ -32,7 +32,10 @@
           :key="`${item.id.idEtudiant}-${item.id.idAction}-${item.id.idSemestre}`"
           class="table-row"
         >
-          <td @click="showPopup(item)" class="activity-name">{{ item.action?.nom || 'N/A' }}</td>
+          <!-- En cliquant sur le nom de l'action, on ouvre le popup de détails -->
+          <td @click="showActionPopup(item)" class="activity-name">
+            {{ item.action?.nom || 'N/A' }}
+          </td>
           <td>{{ formatDate(item.dateDebutParticipation) }}</td>
           <td class="text-right">
             <span v-if="item.statut === true" class="status-valid">Validé</span>
@@ -43,37 +46,81 @@
             <span class="points">{{ item.totalPoints || 0 }} pts</span>
           </td>
           <td class="text-right">
-            <button class="btn-suivre" @click="showSuiviPopup(item)">Suivre</button>
+            <!-- Bouton "Suivre" conserve son libellé et ouvre le popup de suivi -->
+            <button class="btn-suivre" @click.stop="showSuiviPopup(item)">Suivre</button>
           </td>
         </tr>
         </tbody>
       </table>
     </div>
-    <div v-else><p>Aucun historique disponible.</p></div>
-
-    <div class="pagination" v-if="totalPages > 1">
-      <button @click="prevPage" :disabled="currentPage === 1" class="pagination-button">Précédent</button>
-      <span class="page-indicator">Page {{ currentPage }} sur {{ totalPages }}</span>
-      <button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-button">Suivant</button>
+    <div v-else>
+      <p>Aucun historique disponible.</p>
     </div>
 
-    <SuiviFichePopup
-      :visible="suiviVisible"
-      :participationData="selectedSuivi"
-      @close="suiviVisible = false"
-    />
+    <div class="pagination" v-if="totalPages > 1">
+      <button @click="prevPage" :disabled="currentPage === 1" class="pagination-button">
+        Précédent
+      </button>
+      <span class="page-indicator">Page {{ currentPage }} sur {{ totalPages }}</span>
+      <button @click="nextPage" :disabled="currentPage === totalPages" class="pagination-button">
+        Suivant
+      </button>
+    </div>
+
+    <!-- Popup pour afficher les détails de l'action -->
+    <div v-if="actionPopupVisible" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Détails de l'Action</h2>
+        <p>
+          <strong>Nom de l'action :</strong>
+          {{ selectedAction?.action?.nom || 'N/A' }}
+        </p>
+        <p>
+          <strong>Description de la participation :</strong>
+          {{ selectedAction?.descriptionParticipation || 'Aucune description renseignée' }}
+        </p>
+        <p>
+          <strong>Date de saisie :</strong>
+          {{ formatDate(selectedAction?.dateDebutParticipation) }}
+        </p>
+        <button class="modal-close-button" @click="actionPopupVisible = false">
+          Fermer
+        </button>
+      </div>
+    </div>
+
+    <!-- Popup pour le suivi de la fiche -->
+    <div v-if="suiviVisible" class="modal-overlay">
+      <div class="modal-content">
+        <h2>Suivi de la Participation</h2>
+        <!-- Ici, affichez l'évolution du suivi de la fiche (soumission, validation, etc.) -->
+        <p>
+          <strong>Action :</strong> {{ selectedSuivi?.action?.nom || 'N/A' }}
+        </p>
+        <p>
+          <strong>Date de Réalisation :</strong> {{ formatDate(selectedSuivi?.dateDebutParticipation) }}
+        </p>
+        <!-- Ajoutez d'autres éléments d'évolution de suivi ici selon vos besoins -->
+        <button class="modal-close-button" @click="suiviVisible = false">
+          Fermer
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import SuiviFichePopup from '@/components/SuiviFichePopup.vue';
 
 const historique = ref([]);
 const etudiant = ref(null);
 const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(5);
+
+// États pour les deux popups
+const selectedAction = ref(null);
+const actionPopupVisible = ref(false);
 const selectedSuivi = ref(null);
 const suiviVisible = ref(false);
 
@@ -81,14 +128,15 @@ const loggedInUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
 
 async function getHistorique() {
   if (!loggedInUser?.email) return;
+  // Récupération de l'étudiant par email
   const etuRes = await fetch(`http://localhost:8989/api/etudiants/byEmail?email=${loggedInUser.email}`);
   const etudiantData = await etuRes.json();
   etudiant.value = etudiantData;
-
+  // Récupération des participations associées à l'étudiant
   const partRes = await fetch(`http://localhost:8989/api/participes/search/findByIdIdEtudiant?idEtudiant=${etudiantData.idEtudiant}`);
   const data = await partRes.json();
   const participations = data._embedded?.participes || [];
-
+  // Pour chaque participation, récupérer l'action et le semestre
   for (const item of participations) {
     const actionRes = await fetch(`http://localhost:8989/api/actions/${item.id.idAction}`);
     const semRes = await fetch(`http://localhost:8989/api/semestres/${item.id.idSemestre}`);
@@ -99,6 +147,7 @@ async function getHistorique() {
 }
 
 function formatDate(dateStr) {
+  if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleDateString('fr-FR');
 }
@@ -106,7 +155,9 @@ function formatDate(dateStr) {
 const filteredHistorique = computed(() => {
   return !searchQuery.value
     ? historique.value
-    : historique.value.filter((item) => item.action?.nom?.toLowerCase().includes(searchQuery.value.toLowerCase()));
+    : historique.value.filter((item) =>
+      item.action?.nom?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    );
 });
 
 const totalPages = computed(() => Math.ceil(filteredHistorique.value.length / itemsPerPage.value));
@@ -122,6 +173,13 @@ function prevPage() {
   if (currentPage.value > 1) currentPage.value--;
 }
 
+// Ouvre le popup de détails de l'action
+function showActionPopup(item) {
+  selectedAction.value = item;
+  actionPopupVisible.value = true;
+}
+
+// Ouvre le popup de suivi
 function showSuiviPopup(item) {
   selectedSuivi.value = item;
   suiviVisible.value = true;
@@ -302,6 +360,11 @@ onMounted(getHistorique);
   }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .modal-content h2 {
   margin-bottom: 20px;
   color: #6A3FA0;
@@ -335,12 +398,21 @@ onMounted(getHistorique);
   box-shadow: 0 6px 15px rgba(106, 63, 160, 0.4);
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* Bouton "Suivre" */
+.btn-suivre {
+  background-color: #6A3FA0;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-suivre:hover {
+  background-color: #5a2f8f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(106, 63, 160, 0.3);
 }
 </style>
