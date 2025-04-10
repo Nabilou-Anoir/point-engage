@@ -118,6 +118,9 @@ import axios from "axios";
 
 const baseURL = "http://localhost:8989/api";
 
+// 🔐 Référent connecté (à remplacer par une vraie auth ou localStorage)
+const referentId = localStorage.getItem("referentId") || 1; // Par défaut, 1 pour test
+
 const eleves = ref([]);
 const searchQuery = ref("");
 const selectedSemestre = ref("1");
@@ -131,12 +134,11 @@ const toggleFicheVisible = (eleve) => {
 
 const fetchParticipations = async () => {
   try {
-    const { data: participations } = await axios.get(`${baseURL}/participes`);
-    console.log("📡 Participations brutes :", participations);
+    const { data: participations } = await axios.get(`${baseURL}/participes/referent/${referentId}`);
+    console.log("📡 Participations du référent :", participations);
 
-    // 👉 ici tu peux remettre le filtre plus tard
-    const filtered = participations.filter(p => p.statut === false || p.statut === null);
-    console.log("🔍 Participations filtrées (non validées) :", filtered);
+    const filtered = participations; // supprime le filtre
+
 
     const eleveList = await Promise.all(filtered.map(async (p) => {
       try {
@@ -165,13 +167,13 @@ const fetchParticipations = async () => {
     }));
 
     eleves.value = eleveList.filter(Boolean);
-    console.log("✅ Élèves transformés :", eleves.value);
+    console.log("✅ Élèves à afficher :", eleves.value);
   } catch (error) {
-    console.error("❌ Erreur lors du chargement des participations :", error);
+    console.error("❌ Erreur chargement participations :", error);
   }
 };
 
-// 👉 Pour test : affiche tout sans filtrer
+// 🔍 Ajoute des filtres ici si besoin
 const elevesFiltres = computed(() => eleves.value);
 
 const validerEnvoi = async (eleve) => {

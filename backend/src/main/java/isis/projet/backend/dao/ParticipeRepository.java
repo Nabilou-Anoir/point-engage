@@ -1,13 +1,14 @@
 package isis.projet.backend.dao;
 
-import isis.projet.backend.entity.Participe;
-import isis.projet.backend.entity.ParticipeKey;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import isis.projet.backend.entity.Participe;
+import isis.projet.backend.entity.ParticipeKey;
 
 @Repository
 public interface ParticipeRepository extends JpaRepository<Participe, ParticipeKey> {
@@ -32,4 +33,8 @@ public interface ParticipeRepository extends JpaRepository<Participe, ParticipeK
     @Query("SELECT p FROM Participe p WHERE p.semestre.nbSemestre = :nbSemestre AND FUNCTION('YEAR', p.semestre.anneeUniversitaire) = :year")
     List<Participe> findBySemestreAndYear(@Param("nbSemestre") Integer nbSemestre,
                                           @Param("year") Integer year);
+    
+    @Query("SELECT p FROM Participe p WHERE p.referent.idReferent = :idReferent")
+    List<Participe> findByIdReferent(@Param("idReferent") Integer idReferent);
+
 }
