@@ -52,11 +52,6 @@
 
       <h1 class="title">Référent</h1>
 
-      <!-- 👁️ Voir ce que Vue charge -->
-      <pre style="background:#eee; padding:1em; max-height:300px; overflow:auto">
-        {{ eleves }}
-      </pre>
-
       <!-- 🧾 Tableau -->
       <div class="table-section">
         <div class="table-container">
@@ -97,6 +92,7 @@
                     type="checkbox"
                     v-model="eleve.envoye"
                     @change="validerEnvoi(eleve)"
+                    :disabled="eleve.envoye"
                     class="styled-checkbox"
                   />
                 </td>
@@ -119,7 +115,7 @@ import axios from "axios";
 const baseURL = "http://localhost:8989/api";
 
 // 🔐 Référent connecté (à remplacer par une vraie auth ou localStorage)
-const referentId = localStorage.getItem("referentId") || 1; // Par défaut, 1 pour test
+const referentId = localStorage.getItem("referentId") || 1;
 
 const eleves = ref([]);
 const searchQuery = ref("");
@@ -137,10 +133,7 @@ const fetchParticipations = async () => {
     const { data: participations } = await axios.get(`${baseURL}/participes/referent/${referentId}`);
     console.log("📡 Participations du référent :", participations);
 
-    const filtered = participations; // supprime le filtre
-
-
-    const eleveList = await Promise.all(filtered.map(async (p) => {
+    const eleveList = await Promise.all(participations.map(async (p) => {
       try {
         const [etudiant, action, referentiel] = await Promise.all([
           axios.get(`${baseURL}/etudiants/${p.id.idEtudiant}`),
@@ -173,19 +166,26 @@ const fetchParticipations = async () => {
   }
 };
 
-// 🔍 Ajoute des filtres ici si besoin
+// 🔍 À adapter avec filtres si besoin
 const elevesFiltres = computed(() => eleves.value);
 
 const validerEnvoi = async (eleve) => {
+  if (!eleve.envoye) {
+    alert("Tu ne peux pas désenvoyer une participation.");
+    eleve.envoye = true;
+    return;
+  }
+
   try {
     await axios.put(`${baseURL}/participes/${eleve.etudiantId}/${eleve.actionId}/${eleve.semestreId}`, {
       statut: eleve.valide,
       remarqueReferent: eleve.remarqueReferent,
     });
-    console.log("✅ Participation mise à jour :", eleve.nom);
+    console.log("✅ Participation envoyée pour :", eleve.nom);
   } catch (e) {
     console.error("❌ Erreur d’envoi :", e.response?.data || e.message);
-    alert("Erreur lors de l’envoi de la participation.");
+    alert("Erreur lors de l’envoi.");
+    eleve.envoye = false; // rollback si échec
   }
 };
 
