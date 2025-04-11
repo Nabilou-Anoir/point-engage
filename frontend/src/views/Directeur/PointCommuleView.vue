@@ -2,6 +2,7 @@
   <div class="main-content">
     <h2 class="title">Points cumulés</h2>
 
+    <!-- Zone de recherche -->
     <div class="filters">
       <input
         type="text"
@@ -11,6 +12,7 @@
       />
     </div>
 
+    <!-- Tableau des étudiants avec leur total cumulatif -->
     <div class="table-container">
       <table class="custom-table">
         <thead>
@@ -30,18 +32,21 @@
       </table>
     </div>
 
+    <!-- Pagination -->
     <div class="pagination">
       <button @click="prevPage" :disabled="currentPage === 1">«</button>
       <span>{{ currentPage }} / {{ totalPages }}</span>
       <button @click="nextPage" :disabled="currentPage === totalPages">»</button>
     </div>
 
+    <!-- Bouton d'envoi au service scolarité -->
     <div class="send-section">
       <button class="send-btn" @click="envoyerAuServiceScolarite">
         Envoyer au service de scolarité
       </button>
     </div>
 
+    <!-- Popup de confirmation -->
     <div v-if="showConfirmationPopup" class="popup-overlay" @click.self="closeConfirmation">
       <div class="popup-box">
         <div class="popup-icon">
@@ -59,19 +64,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import axios from "axios";
 
 const studentsList = ref([]);
-const selectedPromotion = ref("");
-const availablePromotions = ref([]);
 const searchQuery = ref("");
 const sortColumn = ref("name");
 const sortDirection = ref(1);
 const currentPage = ref(1);
 const itemsPerPage = 5;
 const showConfirmationPopup = ref(false);
+const availablePromotions = ref([]);
 const baseURL = "http://localhost:8989/api";
+
+// Stocker les IDs des étudiants pertinents
+const relevantStudentIds = ref(new Set());
 
 const sortTable = (column) => {
   if (sortColumn.value === column) {
@@ -91,13 +98,11 @@ const sortedStudents = computed(() => {
 });
 
 const filteredStudents = computed(() => {
-  return sortedStudents.value.filter((student) => {
-    const query = searchQuery.value.toLowerCase();
-    const matchesPromotion = selectedPromotion.value ? student.promotion === selectedPromotion.value : true;
-    const matchesSearch = student.name.toLowerCase().includes(query) ||
-      student.promotion.toLowerCase().includes(query);
-    return matchesPromotion && matchesSearch;
-  });
+  const query = searchQuery.value.toLowerCase();
+  return sortedStudents.value.filter(student =>
+    student.name.toLowerCase().includes(query) ||
+    student.promotion.toLowerCase().includes(query)
+  );
 });
 
 const totalPages = computed(() =>
@@ -117,64 +122,72 @@ const nextPage = () => {
   if (currentPage.value < totalPages.value) currentPage.value++;
 };
 
-const processStudentData = (participations) => {
-  const studentMap = new Map();
+// Récupérer les IDs des étudiants traités par AttribuerPoint
+const fetchRelevantStudentIds = () => {
+  // On utilise allProcessedStudents qui contient TOUS les étudiants traités
+  const storedIds = sessionStorage.getItem("allProcessedStudents");
+  if (storedIds) {
+    try {
+      const parsedIds = JSON.parse(storedIds);
+      relevantStudentIds.value = new Set(parsedIds);
+      console.log("IDs pertinents récupérés :", parsedIds);
+    } catch (e) {
+      console.error("Erreur lors du parsing des IDs stockés:", e);
+      relevantStudentIds.value = new Set();
+    }
+  } else {
+    console.warn("Aucun ID stocké sous 'allProcessedStudents'.");
+    relevantStudentIds.value = new Set();
+  }
+};
 
-  participations.forEach(p => {
-    const studentId = p.etudiantId;
-    if (!studentMap.has(studentId)) {
-      studentMap.set(studentId, {
-        etudiantId: studentId,
-        name: p.name,
-        promotion: p.promotion,
+// Récupère toutes les participations et l'ensemble des étudiants,
+// puis additionne les points de chaque étudiant
+const fetchDataFromAPI = async () => {
+  try {
+    // Première étape : récupérer la liste des IDs pertinents
+    fetchRelevantStudentIds();
+
+    // Récupérer toutes les participations
+    const { data: participations } = await axios.get(`${baseURL}/participes`);
+
+    // Récupérer toutes les informations des étudiants
+    const { data: etudiants } = await axios.get(`${baseURL}/etudiants`);
+
+    // Créer un Map regroupant les étudiants par leur ID
+    const studentMap = new Map();
+    for (const etudiant of etudiants) {
+      studentMap.set(etudiant.idEtudiant, {
+        etudiantId: etudiant.idEtudiant,
+        name: `${etudiant.prenom} ${etudiant.nom}`,
+        promotion: etudiant.promotion || "Non spécifiée",
         totalPoints: 0,
         participations: []
       });
     }
 
-    const student = studentMap.get(studentId);
-    let points = parseFloat(p.pointsAccordes || 0);
-    points = Math.min(points, 0.5);
-    student.totalPoints = Math.min(student.totalPoints + points, 0.5);
-    student.participations.push({
-      engagementType: p.engagementType,
-      actionType: p.actionType || "N/A",
-      pointsAccordes: points
-    });
-  });
-
-  studentsList.value = Array.from(studentMap.values());
-  availablePromotions.value = [...new Set(studentsList.value.map(s => s.promotion))];
-  sessionStorage.setItem("pointsCumules", JSON.stringify(studentsList.value));
-};
-
-const fetchDataFromAPI = async () => {
-  try {
-    const { data: participations } = await axios.get(`${baseURL}/participes`);
-    const enrichedParticipations = await Promise.all(participations.map(async (p) => {
-      try {
-        const [etudiant, action, referentiel] = await Promise.all([
-          axios.get(`${baseURL}/etudiants/${p.id.idEtudiant}`),
-          axios.get(`${baseURL}/actions/${p.id.idAction}`),
-          axios.get(`${baseURL}/referentiels/${p.idReferentiel || 1}`)
-        ]);
-
-        return {
-          etudiantId: etudiant.data.idEtudiant,
-          name: `${etudiant.data.prenom} ${etudiant.data.nom}`,
-          promotion: etudiant.data.promotion,
-          engagementType: referentiel.data.nom || "N/A",
-          actionType: action.data.nom,
-          pointsAccordes: parseFloat(p.pointAction || 0)
-        };
-      } catch (e) {
-        console.error("Erreur sur une participation:", e);
-        return null;
+    // Pour chaque participation, si l'étudiant est pertinent, ajouter ses points
+    for (const p of participations) {
+      const studentId = p.id.idEtudiant;
+      if (relevantStudentIds.value.has(studentId)) {
+        const student = studentMap.get(studentId);
+        if (student && p.pointAction !== null) { // Vérifier que pointAction n'est pas null
+          let points = parseFloat(p.pointAction || 0);
+          student.totalPoints += points;
+          student.participations.push({
+            actionId: p.id.idAction,
+            pointsAccordes: points
+          });
+        }
       }
-    }));
+    }
 
-    const validParticipations = enrichedParticipations.filter(Boolean);
-    processStudentData(validParticipations);
+    // Conserver uniquement les étudiants pertinents ET qui ont des points > 0
+    studentsList.value = Array.from(studentMap.values()).filter(student =>
+      relevantStudentIds.value.has(student.etudiantId) && student.totalPoints > 0
+    );
+
+    availablePromotions.value = [...new Set(studentsList.value.map(s => s.promotion))];
   } catch (error) {
     console.error("Erreur de chargement des données:", error);
     studentsList.value = [];
@@ -197,16 +210,13 @@ const closeConfirmation = () => {
 };
 
 onMounted(() => {
-  const participationsData = sessionStorage.getItem("participationsAttribuées");
-  if (participationsData) {
-    try {
-      const participations = JSON.parse(participationsData);
-      processStudentData(participations);
-    } catch {
-      fetchDataFromAPI();
-    }
-  } else {
+  fetchDataFromAPI();
+});
+
+watch(() => sessionStorage.getItem("dataUpdated"), () => {
+  if (sessionStorage.getItem("dataUpdated") === "true") {
     fetchDataFromAPI();
+    sessionStorage.removeItem("dataUpdated");
   }
 });
 </script>
