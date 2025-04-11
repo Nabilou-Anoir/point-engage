@@ -133,7 +133,7 @@ const logout = () => {
   color: #fff;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.2);
   height: 80px;
-  width: 100%;
+  width: 98%;
   position: fixed;
   top: 0;
   left: 0;
