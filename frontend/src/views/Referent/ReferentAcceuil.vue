@@ -34,22 +34,6 @@
         </div>
       </div>
 
-      <!-- 📅 Dates -->
-      <div class="filter-group date-range">
-        <div class="date-container">
-          <label class="selectlabel">Date de début</label>
-          <div class="select-container">
-            <input type="date" v-model="dateDebut" class="select-input" />
-          </div>
-        </div>
-        <div class="date-container">
-          <label class="selectlabel">Date de fin</label>
-          <div class="select-container">
-            <input type="date" v-model="dateFin" class="select-input" />
-          </div>
-        </div>
-      </div>
-
       <h1 class="title">Référent</h1>
 
       <!-- 🧾 Tableau -->
