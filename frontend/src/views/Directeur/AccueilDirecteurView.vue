@@ -14,7 +14,7 @@
           </div>
           <div class="kpi-text">
             <h3>Étudiants Engagés</h3>
-            <p class="kpi-value">1,250</p>
+            <p class="kpi-value">37</p>
             <p class="kpi-trend">+12% ce mois</p>
           </div>
         </div>
@@ -26,7 +26,7 @@
           </div>
           <div class="kpi-text">
             <h3>Activités Validées</h3>
-            <p class="kpi-value">320</p>
+            <p class="kpi-value">20</p>
             <p class="kpi-trend">+8% ce mois</p>
           </div>
         </div>
@@ -38,7 +38,7 @@
           </div>
           <div class="kpi-text">
             <h3>Taux de Participation</h3>
-            <p class="kpi-value">85%</p>
+            <p class="kpi-value">45%</p>
             <p class="kpi-trend">+5% ce mois</p>
           </div>
         </div>
