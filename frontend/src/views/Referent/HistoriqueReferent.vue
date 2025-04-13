@@ -50,14 +50,14 @@
         <table class="styled-table">
           <thead>
           <tr>
-            <th>Nom prénom</th>
+            <th>Nom Prenom</th>
             <th>Promotion</th>
             <th>Action</th>
-            <th>Résumé contenu</th>
+            <th>Résumé du contenu</th>
             <th>Validité</th>
             <th>Nombre points</th>
             <th>Remarque</th>
-            <th>Information</th>
+            <th>Info</th>
           </tr>
           </thead>
           <tbody>
@@ -75,7 +75,7 @@
               <span v-else class="status-default">En attente</span>
             </td>
             <td class="text-right">
-              <span class="points">{{ part.totalPoints || 0 }} pts</span>
+              <span class="points">{{ part.pointAction || 0 }} pts</span>
             </td>
             <td>{{ part.remarqueReferent || '-' }}</td>
             <td class="text-right">
@@ -109,6 +109,7 @@
       </div>
     </div>
 
+    <!-- Popup pour le suivi de la participation -->
     <div v-if="suiviVisible" class="modal-overlay">
       <div class="modal-content">
         <h2>Suivi de la Participation</h2>
@@ -140,7 +141,7 @@
         </p>
         <p>
           <strong>Points :</strong>
-          {{ selectedSuivi?.totalPoints || 0 }} pts
+          {{ selectedSuivi?.pointAction || 0 }} pts
         </p>
         <p>
           <strong>Résumé :</strong>
@@ -161,23 +162,19 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from "vue";
 
 const allHistorique = ref([]);
 const historique = ref([]);
 const searchQuery = ref("");
-
 const selectedSemestre = ref(null);
 const selectedYearStart = ref(null);
 const selectedYearEnd = ref(null);
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
-
 const selectedSuivi = ref(null);
 const suiviVisible = ref(false);
-
 const semestres = ref([]);
 const groupedSemestres = ref([]);
 
@@ -212,8 +209,34 @@ async function getSemestres() {
     semestres.value = await res.json();
     computeGroupedSemestres();
   } catch (error) {
-    console.error("Erreur lors de la récupération des semestres :", error);
+    console.error("Erreur récupération semestres:", error);
   }
+}
+
+async function enrichParticipation(part) {
+  const [etudiantRes, actionRes, semestreRes] = await Promise.all([
+    fetch(`http://localhost:8989/api/etudiants/${part.id.idEtudiant}`),
+    fetch(`http://localhost:8989/api/actions/${part.id.idAction}`),
+    fetch(`http://localhost:8989/api/semestres/${part.id.idSemestre}`)
+  ]);
+
+  const [etudiant, action, semData] = await Promise.all([
+    etudiantRes.json(),
+    actionRes.json(),
+    semestreRes.json()
+  ]);
+
+  part.etudiant = etudiant;
+  part.action = action;
+  part.semestre = semData;
+
+  if (action.idReferentiel) {
+    const refRes = await fetch(`http://localhost:8989/api/referentiels/${action.idReferentiel}`);
+    action.referentiel = await refRes.json();
+  }
+
+  // Remplacer totalPoints par pointsAction si disponible
+  part.pointAction= part.pointAction || 0;
 }
 
 async function getAllParticipations() {
@@ -223,32 +246,16 @@ async function getAllParticipations() {
     const enriched = [];
     for (const part of data) {
       try {
-        const [etudiantRes, actionRes, semestreRes] = await Promise.all([
-          fetch(`http://localhost:8989/api/etudiants/${part.id.idEtudiant}`),
-          fetch(`http://localhost:8989/api/actions/${part.id.idAction}`),
-          fetch(`http://localhost:8989/api/semestres/${part.id.idSemestre}`)
-        ]);
-        const [etudiant, action, semData] = await Promise.all([
-          etudiantRes.json(),
-          actionRes.json(),
-          semestreRes.json()
-        ]);
-        part.etudiant = etudiant;
-        part.action = action;
-        part.semestre = semData;
-        if (action.idReferentiel) {
-          const refRes = await fetch(`http://localhost:8989/api/referentiels/${action.idReferentiel}`);
-          action.referentiel = await refRes.json();
-        }
+        await enrichParticipation(part);
         enriched.push(part);
       } catch (error) {
-        console.error("Erreur lors de l'enrichissement d'une participation :", error);
+        console.error("Erreur enrichissement:", error);
       }
     }
     allHistorique.value = enriched;
     if (!selectedSemestre.value) historique.value = enriched;
   } catch (error) {
-    console.error("Erreur lors de la récupération des participations :", error);
+    console.error("Erreur récupération participations:", error);
   }
 }
 
@@ -258,44 +265,25 @@ async function setSemestreFilter(sem) {
   const year = d.getFullYear();
   selectedYearStart.value = year;
   selectedYearEnd.value = year + 1;
+
   try {
     const res = await fetch(
       `http://localhost:8989/api/participes/byYearAndSemestre?year=${year}&semestre=${sem.nbSemestre}`
     );
-    if (!res.ok) {
-      console.error("Erreur lors de la récupération filtrée :", res.statusText);
-      return;
-    }
     const data = await res.json();
     const enriched = [];
     for (const part of data) {
       try {
-        const [etudiantRes, actionRes, semestreRes] = await Promise.all([
-          fetch(`http://localhost:8989/api/etudiants/${part.id.idEtudiant}`),
-          fetch(`http://localhost:8989/api/actions/${part.id.idAction}`),
-          fetch(`http://localhost:8989/api/semestres/${part.id.idSemestre}`)
-        ]);
-        const [etudiant, action, semData] = await Promise.all([
-          etudiantRes.json(),
-          actionRes.json(),
-          semestreRes.json()
-        ]);
-        part.etudiant = etudiant;
-        part.action = action;
-        part.semestre = semData;
-        if (action.idReferentiel) {
-          const refRes = await fetch(`http://localhost:8989/api/referentiels/${action.idReferentiel}`);
-          action.referentiel = await refRes.json();
-        }
+        await enrichParticipation(part);
         enriched.push(part);
       } catch (error) {
-        console.error("Erreur lors de l'enrichissement d'une participation filtrée :", error);
+        console.error("Erreur enrichissement filtre:", error);
       }
     }
     historique.value = enriched;
     currentPage.value = 1;
   } catch (error) {
-    console.error("Erreur fetch dans setSemestreFilter :", error);
+    console.error("Erreur fetch dans setSemestreFilter:", error);
   }
 }
 
@@ -305,16 +293,13 @@ function applyLocalFilter() {
 
 const filteredParticipations = computed(() => {
   const baseList = searchQuery.value.trim() ? allHistorique.value : historique.value;
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase();
-    return baseList.filter(part => {
-      const nom = (part.etudiant?.nom || "").toLowerCase();
-      const promo = (part.etudiant?.promotion || "").toLowerCase();
-      const actionName = (part.action?.referentiel?.nom || part.action?.nom || "").toLowerCase();
-      return nom.includes(q) || promo.includes(q) || actionName.includes(q);
-    });
-  }
-  return baseList;
+  const q = searchQuery.value.toLowerCase();
+  return baseList.filter((part) => {
+    const nom = (part.etudiant?.nom || "").toLowerCase();
+    const promo = (part.etudiant?.promotion || "").toLowerCase();
+    const actionName = (part.action?.referentiel?.nom || part.action?.nom || "").toLowerCase();
+    return nom.includes(q) || promo.includes(q) || actionName.includes(q);
+  });
 });
 
 const totalPages = computed(() =>
@@ -366,21 +351,27 @@ function showSuiviPopup(item) {
 onMounted(async () => {
   await getAllParticipations();
   await getSemestres();
+
+  setInterval(async () => {
+    if (!selectedSemestre.value) {
+      await getAllParticipations();
+    } else {
+      await setSemestreFilter({
+        nbSemestre: selectedSemestre.value,
+        anneeUniversitaire: `${selectedYearStart.value}-09-01`,
+      });
+    }
+  }, 30000);
 });
 </script>
 
 <style scoped>
-.main-layout {
-  display: flex;
-  min-height: 100vh;
-}
-
 /* 📌 Sidebar fine et moderne */
 .sidebar {
-  width: 240px; /* Largeur légèrement augmentée pour plus d'espace */
-  background-color: #ffffff; /* Fond blanc pour un look épuré */
+  width: 240px;
+  background-color: #ffffff;
   padding: 24px;
-  border-right: 1px solid #eaeef3; /* Bordure très subtile */
+  border-right: 1px solid #eaeef3;
   position: fixed;
   height: 100vh;
   overflow-y: auto;
@@ -389,9 +380,9 @@ onMounted(async () => {
 .sidebar h3 {
   font-size: 18px;
   margin-bottom: 24px;
-  color: #2c3e50; /* Couleur de texte sombre et élégante */
+  color: #2c3e50;
   font-weight: 600;
-  letter-spacing: -0.5px; /* Espacement pour un look moderne */
+  letter-spacing: -0.5px;
 }
 
 .filter-options {
@@ -407,33 +398,33 @@ onMounted(async () => {
   cursor: pointer;
   font-size: 15px;
   margin-bottom: 12px;
-  color: #34495e; /* Couleur de texte légèrement plus claire */
+  color: #34495e;
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 8px; /* Espace entre l'icône et le texte */
+  gap: 8px;
   transition: color 0.3s ease;
 }
 
 .annee-group h4:hover {
-  color: #6a3fa0; /* Changement de couleur au survol */
+  color: #6a3fa0;
 }
 
 .annee-group h4::before {
-  content: "▸"; /* Icône flèche simple */
+  content: "▸";
   font-size: 12px;
-  color: #6a3fa0; /* Couleur du thème */
+  color: #6a3fa0;
   transition: transform 0.3s ease;
 }
 
 .annee-group h4.expanded::before {
-  transform: rotate(90deg); /* Rotation lorsque le groupe est ouvert */
+  transform: rotate(90deg);
 }
 
 .semestre-group {
   margin-left: 16px;
   padding-left: 8px;
-  border-left: 2px solid #eaeef3; /* Ligne verticale pour séparer les semestres */
+  border-left: 2px solid #eaeef3;
 }
 
 .semestre-btn {
@@ -442,50 +433,49 @@ onMounted(async () => {
   width: 100%;
   padding: 10px 12px;
   margin-bottom: 6px;
-  background-color: transparent; /* Fond transparent pour un look léger */
+  background-color: transparent;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   text-align: left;
   transition: all 0.3s ease;
-  color: #555; /* Couleur de texte douce */
+  color: #555;
   font-size: 14px;
 }
 
 .semestre-btn:hover {
-  background-color: #f8f9fa; /* Fond très léger au survol */
-  color: #6a3fa0; /* Changement de couleur au survol */
-  transform: translateX(4px); /* Effet dynamique */
+  background-color: #f8f9fa;
+  color: #6a3fa0;
+  transform: translateX(4px);
 }
 
 .semestre-btn.active {
-  background-color: #6a3fa0; /* Couleur du thème */
+  background-color: #6a3fa0;
   color: white;
   font-weight: 500;
 }
 
 .semestre-btn::before {
-  content: "•"; /* Icône simple pour les semestres */
+  content: "•";
   margin-right: 8px;
   font-size: 16px;
-  color: #6a3fa0; /* Couleur du thème */
+  color: #6a3fa0;
   transition: color 0.3s ease;
 }
 
 .semestre-btn.active::before {
-  content: "✔"; /* Icône de validation pour le bouton actif */
+  content: "✔";
   color: white;
 }
 
-/* 📌 Main content et ajustement pour ne pas être caché par la sidebar */
+/* 📌 Main content et filtres */
 .main-content {
-  margin-left: 280px; /* Décalage pour laisser la place à la sidebar */
   padding-top: 37px;
   font-family: 'Inter', sans-serif;
   max-width: 1100px;
+  margin: 0 auto;
   background-color: #f8f9fa;
   padding: 37px 24px;
-  box-sizing: border-box;
 }
 
 .top-filter {
@@ -536,7 +526,7 @@ onMounted(async () => {
 /* 📊 Tableau */
 .table-container {
   width: 100%;
-  overflow-x: auto; /* Permet le défilement horizontal si nécessaire */
+  overflow-x: auto;
   background: #ffffff;
   border-radius: 12px;
   margin-bottom: 20px;
@@ -545,7 +535,7 @@ onMounted(async () => {
 .styled-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: auto; /* Les colonnes s'ajustent au contenu */
+  table-layout: auto;
 }
 
 .styled-table th,
@@ -553,7 +543,7 @@ onMounted(async () => {
   padding: 14px;
   text-align: left;
   border-bottom: 1px solid #eee;
-  word-wrap: break-word; /* Permet de couper les mots trop longs */
+  word-wrap: break-word;
 }
 
 .styled-table th {
@@ -566,7 +556,7 @@ onMounted(async () => {
   background: #f5f5f5;
 }
 
-/* 📌 Bouton Information : emoji sans encadrement */
+/* 📌 Bouton Information */
 .info-emoji {
   cursor: pointer;
   font-size: 18px;
@@ -588,22 +578,28 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   margin-top: 20px;
+  gap: 10px;
 }
 
 .pagination-button {
-  padding: 8px 15px;
-  background-color: #3182ce;
+  padding: 10px 20px;
+  background-color: #6a3fa0;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  margin: 0 10px;
+  font-size: 14px;
   transition: background-color 0.3s ease;
+  font-weight: 500;
 }
 
 .pagination-button:disabled {
   background-color: #cbd5e0;
   cursor: not-allowed;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #5a2f90;
 }
 
 .page-indicator {

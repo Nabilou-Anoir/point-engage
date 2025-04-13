@@ -27,15 +27,11 @@
         </thead>
         <tbody>
         <tr v-for="student in paginatedStudents" :key="student.etudiantId">
-          <td @click="openStudentModal(student)" style="cursor: pointer; color: blue">
-            {{ student.name }}
-          </td>
+          <td @click="openStudentModal(student)" style="cursor: pointer; color: blue">{{ student.name }}</td>
           <td>{{ student.promotion }}</td>
           <td>{{ student.engagementType }}</td>
           <td>{{ student.summary }}</td>
-          <td>
-            <button @click="openChooseModal(student)">Assigner</button>
-          </td>
+          <td><button @click="openChooseModal(student)">Assigner</button></td>
         </tr>
         </tbody>
       </table>
@@ -44,9 +40,7 @@
     <!-- Pagination -->
     <div class="pagination">
       <button @click="previousPage" :disabled="currentPage === 1">&lt;</button>
-      <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="{ active: currentPage === page }">
-        {{ page }}
-      </button>
+      <button v-for="page in totalPages" :key="page" @click="goToPage(page)" :class="{ active: currentPage === page }">{{ page }}</button>
       <button @click="nextPage" :disabled="currentPage === totalPages">&gt;</button>
     </div>
 
@@ -133,51 +127,53 @@ export default {
     },
   },
   async mounted() {
-    const cached = sessionStorage.getItem("referentParticipations");
-    if (cached) {
-      this.students = JSON.parse(cached);
-      this.availablePromotions = [...new Set(this.students.map(s => s.promotion))];
-    } else {
-      try {
-        const participationsRes = await axios.get('http://localhost:8989/api/participes');
-        const participations = participationsRes.data.filter(p => p.pointAction === null);
+    try {
+      const participationsRes = await axios.get('http://localhost:8989/api/participes');
+      const participations = participationsRes.data.filter(p => p.pointAction == null);
 
-        const studentList = await Promise.all(participations.map(async (p) => {
-          try {
-            const [etudiant, action, semestre, referentiel] = await Promise.all([
-              axios.get(`http://localhost:8989/api/etudiants/${p.id.idEtudiant}`),
-              axios.get(`http://localhost:8989/api/actions/${p.id.idAction}`),
-              axios.get(`http://localhost:8989/api/semestres/${p.id.idSemestre}`),
-              axios.get(`http://localhost:8989/api/referentiels/${p.idReferentiel || 1}`)
-            ]);
+      const studentList = await Promise.all(participations.map(async (p) => {
+        try {
+          const [etudiant, action, semestre] = await Promise.all([
+            axios.get(`http://localhost:8989/api/etudiants/${p.id.idEtudiant}`),
+            axios.get(`http://localhost:8989/api/actions/${p.id.idAction}`),
+            axios.get(`http://localhost:8989/api/semestres/${p.id.idSemestre}`)
+          ]);
 
-            return {
-              name: etudiant.data.prenom + ' ' + etudiant.data.nom,
-              email: etudiant.data.email,
-              promotion: etudiant.data.promotion,
-              engagementType: referentiel.data.nom || 'Non défini',
-              actionType: action.data.nom,
-              summary: p.descriptionParticipation,
-              description: p.descriptionParticipation,
-              actionId: action.data.idAction,
-              etudiantId: etudiant.data.idEtudiant,
-              semestreId: semestre.data.idSemestre,
-            };
-          } catch (e) {
-            console.error('Erreur sur une participation :', e);
-            return null;
+          let referentielNom = 'Non défini';
+          if (p.idReferentiel) {
+            try {
+              const ref = await axios.get(`http://localhost:8989/api/referentiels/${p.idReferentiel}`);
+              referentielNom = ref.data.nom || 'Non défini';
+            } catch (err) {
+              console.warn('Référentiel non trouvé pour id', p.idReferentiel);
+            }
           }
-        }));
 
-        this.students = studentList.filter(Boolean);
-        this.availablePromotions = [...new Set(this.students.map(s => s.promotion))];
-        sessionStorage.setItem("referentParticipations", JSON.stringify(this.students));
+          return {
+            name: etudiant.data.prenom + ' ' + etudiant.data.nom,
+            email: etudiant.data.email,
+            promotion: etudiant.data.promotion,
+            engagementType: referentielNom,
+            actionType: action.data.nom,
+            summary: p.resumeDirecteur || '-',
+            description: p.descriptionParticipation,
+            actionId: action.data.idAction,
+            etudiantId: etudiant.data.idEtudiant,
+            semestreId: semestre.data.idSemestre,
+          };
+        } catch (e) {
+          console.error('Erreur sur une participation :', e);
+          return null;
+        }
+      }));
 
-        const refRes = await axios.get('http://localhost:8989/api/referents');
-        this.referents = refRes.data;
-      } catch (error) {
-        console.error('Erreur de chargement des données :', error);
-      }
+      this.students = studentList.filter(Boolean);
+      this.availablePromotions = [...new Set(this.students.map(s => s.promotion))];
+
+      const refRes = await axios.get('http://localhost:8989/api/referents');
+      this.referents = refRes.data;
+    } catch (error) {
+      console.error('Erreur de chargement des données :', error);
     }
   },
   methods: {
@@ -225,4 +221,6 @@ export default {
 };
 </script>
 
-<style scoped src="./ReferentView.css"></style>
+
+<style scoped src="./ReferentView.css">
+</style>

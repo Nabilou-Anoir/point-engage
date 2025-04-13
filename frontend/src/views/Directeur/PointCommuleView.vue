@@ -77,7 +77,8 @@ const showConfirmationPopup = ref(false);
 const availablePromotions = ref([]);
 const baseURL = "http://localhost:8989/api";
 
-// Stocker les IDs des étudiants pertinents
+// Stockage des IDs d'étudiants provenant d'AttribuerPoint (la liste initiale)
+// Note : La clé utilisée ici doit être la même que celle renseignée dans AttribuerPoint (ex: "allProcessedStudents")
 const relevantStudentIds = ref(new Set());
 
 const sortTable = (column) => {
@@ -122,9 +123,11 @@ const nextPage = () => {
   if (currentPage.value < totalPages.value) currentPage.value++;
 };
 
-// Récupérer les IDs des étudiants traités par AttribuerPoint
+/**
+ * Récupère la liste des IDs stockée par AttribuerPoint
+ * (par exemple dans la clé "allProcessedStudents").
+ */
 const fetchRelevantStudentIds = () => {
-  // On utilise allProcessedStudents qui contient TOUS les étudiants traités
   const storedIds = sessionStorage.getItem("allProcessedStudents");
   if (storedIds) {
     try {
@@ -141,12 +144,19 @@ const fetchRelevantStudentIds = () => {
   }
 };
 
-// Récupère toutes les participations et l'ensemble des étudiants,
-// puis additionne les points de chaque étudiant
+/**
+ * Récupère toutes les participations et la liste complète des étudiants,
+ * puis cumule les points d’action pour chaque étudiant.
+ * Seuls les étudiants dont l'ID figure dans relevantStudentIds (provenant d'AttribuerPoint)
+ * seront affichés, et leur total sera limité à 0,50.
+ */
 const fetchDataFromAPI = async () => {
   try {
-    // Première étape : récupérer la liste des IDs pertinents
+    // Récupérer la liste des IDs pertinents
     fetchRelevantStudentIds();
+
+    // Si aucun ID n'est stocké, considérer tous les étudiants comme pertinents
+    const includeAllStudents = relevantStudentIds.value.size === 0;
 
     // Récupérer toutes les participations
     const { data: participations } = await axios.get(`${baseURL}/participes`);
@@ -154,7 +164,7 @@ const fetchDataFromAPI = async () => {
     // Récupérer toutes les informations des étudiants
     const { data: etudiants } = await axios.get(`${baseURL}/etudiants`);
 
-    // Créer un Map regroupant les étudiants par leur ID
+    // Créer un Map pour regrouper les étudiants par leur ID
     const studentMap = new Map();
     for (const etudiant of etudiants) {
       studentMap.set(etudiant.idEtudiant, {
@@ -166,14 +176,15 @@ const fetchDataFromAPI = async () => {
       });
     }
 
-    // Pour chaque participation, si l'étudiant est pertinent, ajouter ses points
+    // Pour chaque participation, cumuler les points si l'étudiant est pertinent
     for (const p of participations) {
       const studentId = p.id.idEtudiant;
-      if (relevantStudentIds.value.has(studentId)) {
+      if (includeAllStudents || relevantStudentIds.value.has(studentId)) {
         const student = studentMap.get(studentId);
-        if (student && p.pointAction !== null) { // Vérifier que pointAction n'est pas null
+        if (student && p.pointAction !== null) {
           let points = parseFloat(p.pointAction || 0);
-          student.totalPoints += points;
+          // Cumul sans dépasser 0,50
+          student.totalPoints = Math.min(student.totalPoints + points, 0.50);
           student.participations.push({
             actionId: p.id.idAction,
             pointsAccordes: points
@@ -182,9 +193,9 @@ const fetchDataFromAPI = async () => {
       }
     }
 
-    // Conserver uniquement les étudiants pertinents ET qui ont des points > 0
+    // Conserver uniquement les étudiants avec des points > 0 ou ceux explicitement pertinents
     studentsList.value = Array.from(studentMap.values()).filter(student =>
-      relevantStudentIds.value.has(student.etudiantId) && student.totalPoints > 0
+      student.totalPoints > 0 || (includeAllStudents || relevantStudentIds.value.has(student.etudiantId))
     );
 
     availablePromotions.value = [...new Set(studentsList.value.map(s => s.promotion))];

@@ -2,7 +2,7 @@
   <div class="main-content">
     <h2 class="title">Attribuer des points</h2>
 
-    <!-- Conteneur du tableau permettant le défilement horizontal si nécessaire -->
+    <!-- Conteneur du tableau permettant le défilement horizontal -->
     <div class="table-container">
       <table class="styled-table">
         <thead>
@@ -17,78 +17,62 @@
         </tr>
         </thead>
         <tbody>
-        <tr
-          v-for="student in students"
-          :key="student.etudiantId + '-' + student.originalIdAction + '-' + student.semestreId"
-        >
+        <tr v-for="student in students"
+            :key="student.etudiantId + '-' + student.originalIdAction + '-' + student.semestreId">
           <td>
             <a href="#" @click.prevent="openStudentModal(student)">{{ student.name }}</a>
           </td>
           <!-- Sélection d'une action -->
           <td>
-            <select
-              v-model="student.idAction"
-              class="editable-input select-input"
-              @change="replaceParticipation(student)"
-            >
-              <option
-                v-for="a in allActions"
-                :key="a.idAction"
-                :value="a.idAction"
-              >
+            <select v-model="student.idAction"
+                    class="editable-input select-input"
+                    @change="replaceParticipation(student)">
+              <option v-for="a in allActions"
+                      :key="a.idAction"
+                      :value="a.idAction">
                 {{ a.nom }}
               </option>
             </select>
           </td>
           <!-- Sélection d'un référentiel (engagement) -->
           <td>
-            <select
-              v-model="student.idReferentiel"
-              class="editable-input select-input"
-              @change="replaceParticipation(student)"
-            >
-              <option
-                v-for="r in allReferentiels"
-                :key="r.idReferentiel"
-                :value="r.idReferentiel"
-              >
+            <select v-model="student.idReferentiel"
+                    class="editable-input select-input"
+                    @change="replaceParticipation(student)">
+              <option v-for="r in allReferentiels"
+                      :key="r.idReferentiel"
+                      :value="r.idReferentiel">
                 {{ r.nom }}
               </option>
             </select>
           </td>
           <!-- Résumé modifiable (lié à resumeDirecteur) -->
           <td>
-            <input
-              type="text"
-              v-model="student.resumeDirecteur"
-              class="editable-input"
-            />
+            <input type="text"
+                   v-model="student.resumeDirecteur"
+                   class="editable-input" />
           </td>
-          <!-- Remarque du Référent (affichage en lecture seule) -->
+          <!-- Remarque du Référent (lecture seule) -->
           <td>
             {{ student.remarqueReferent }}
           </td>
           <!-- Checkbox personnalisé pour "Validé" -->
           <td>
             <label class="custom-checkbox">
-              <input
-                type="checkbox"
-                v-model="student.statut"
-                class="hidden-checkbox"
-              />
+              <input type="checkbox"
+                     v-model="student.statut"
+                     class="hidden-checkbox" />
               <span class="checkmark"></span>
             </label>
           </td>
           <!-- Points liés à pointAction -->
           <td>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              v-model.number="student.pointAction"
-              class="editable-input"
-              @input="limiterValeur(student, 'pointAction')"
-            />
+            <input type="number"
+                   min="0"
+                   step="0.01"
+                   v-model.number="student.pointAction"
+                   class="editable-input"
+                   @input="limiterValeur(student, 'pointAction')" />
           </td>
         </tr>
         </tbody>
@@ -97,10 +81,12 @@
 
     <!-- Bouton d'enregistrement aligné à droite -->
     <div class="button-container">
-      <button class="btn-submit" @click="validerEnvoi">Enregistrer</button>
+      <button class="btn-submit" @click="validerEnvoi">
+        Enregistrer
+      </button>
     </div>
 
-    <!-- Pop-up (modal) des détails de la participation -->
+    <!-- Modal d'affichage des détails de l'étudiant -->
     <div v-if="showModal" class="modal-overlay">
       <div class="modal">
         <h3>Détails de l'étudiant</h3>
@@ -135,8 +121,8 @@ import axios from 'axios';
 export default {
   data() {
     return {
-      allStudents: [], // Ensemble complet récupéré depuis l'API des participations
-      students: [],    // Liste affichée : uniquement les participations dont pointAction === null
+      allStudents: [], // Liste complète des participations récupérées depuis l'API
+      students: [],    // Liste affichée : uniquement les étudiants dont pointAction est null
       allActions: [],
       allReferentiels: [],
       baseURL: 'http://localhost:8989/api',
@@ -175,14 +161,10 @@ export default {
           })
         );
 
-        // Filtrer pour n'afficher que les étudiants dont pointAction est encore null
+        // Filtrer pour n'afficher que les étudiants dont pointAction est null
         this.students = this.allStudents.filter(student => student.pointAction === null);
 
-        // Stocker TOUS les IDs des étudiants avec lesquels vous travaillez (avec ou sans points)
-        const allStudentIds = this.allStudents.map(student => student.etudiantId);
-        sessionStorage.setItem("allProcessedStudents", JSON.stringify(allStudentIds));
-
-        // Stocker uniquement ceux à afficher dans la vue actuelle (sans points)
+        // Mettre à jour la liste des IDs à afficher dans le sessionStorage
         const studentIdsToShow = this.students.map(student => student.etudiantId);
         sessionStorage.setItem("studentsToShow", JSON.stringify(studentIdsToShow));
       } catch (error) {
@@ -219,7 +201,8 @@ export default {
       }
     },
     async replaceParticipation(student) {
-      if (student.idAction === student.originalIdAction && student.idReferentiel === student.originalIdReferentiel) {
+      if (student.idAction === student.originalIdAction &&
+        student.idReferentiel === student.originalIdReferentiel) {
         return;
       }
       try {
@@ -282,17 +265,16 @@ export default {
             return axios.post(`${this.baseURL}/participes`, payload);
           })
         );
+        // Récupérer tous les IDs d'étudiants qui ont été traités (y compris les nouveaux)
+        const allStudentIds = this.allStudents.map(student => student.etudiantId);
 
-        // Après la mise à jour, récupérer les données actualisées pour mettre à jour allProcessedStudents
-        const res = await axios.get(`${this.baseURL}/participes`);
-        const updatedParticipations = res.data;
-        const updatedAllStudentIds = [...new Set(updatedParticipations.map(p => p.id.idEtudiant))];
+        // Stocker cette liste complète pour PointCumuler
+        sessionStorage.setItem("allProcessedStudents", JSON.stringify(allStudentIds));
 
-        // Mettre à jour les données dans sessionStorage
-        sessionStorage.setItem("allProcessedStudents", JSON.stringify(updatedAllStudentIds));
+        // Signaler la mise à jour pour que la vue PointCumuler prenne en compte les modifications
         sessionStorage.setItem("dataUpdated", "true");
 
-        // Recharger la liste après mise à jour
+        // Recharger la liste après la mise à jour
         await this.loadStudents();
         alert("Mise à jour réussie !");
       } catch (error) {
@@ -463,7 +445,7 @@ export default {
   background: #5a2f90;
 }
 
-/* Modal */
+/* Modal agrandi */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -478,26 +460,29 @@ export default {
 
 .modal {
   background: white;
-  padding: 30px;
+  padding: 40px;             /* Augmentation du padding */
   border-radius: 12px;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  width: 600px;              /* Augmentation de la largeur */
+  max-width: 90%;
+  margin: 0 20px;
 }
 
 .modal h3 {
-  font-size: 20px;
+  font-size: 24px;           /* Taille augmentée du titre */
   color: #333;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .modal-btn {
-  padding: 10px 20px;
+  padding: 12px 24px;        /* Padding agrandi */
   background: #6a3fa0;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   transition: background-color 0.3s ease;
 }
 
@@ -524,6 +509,17 @@ export default {
   .btn-submit {
     font-size: 14px;
     padding: 12px;
+  }
+  .modal {
+    width: 90%;
+    padding: 30px;
+  }
+  .modal h3 {
+    font-size: 20px;
+  }
+  .modal-btn {
+    font-size: 14px;
+    padding: 10px 20px;
   }
 }
 </style>

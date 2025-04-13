@@ -57,7 +57,6 @@
             <th>Validité</th>
             <th>Nombre points</th>
             <th>Remarque</th>
-            <!-- Colonne renommée "Information" -->
             <th>Info</th>
           </tr>
           </thead>
@@ -76,7 +75,7 @@
               <span v-else class="status-default">En attente</span>
             </td>
             <td class="text-right">
-              <span class="points">{{ part.totalPoints || 0 }} pts</span>
+              <span class="points">{{ part.pointAction || 0 }} pts</span>
             </td>
             <td>{{ part.remarqueReferent || '-' }}</td>
             <td class="text-right">
@@ -142,7 +141,7 @@
         </p>
         <p>
           <strong>Points :</strong>
-          {{ selectedSuivi?.totalPoints || 0 }} pts
+          {{ selectedSuivi?.pointAction || 0 }} pts
         </p>
         <p>
           <strong>Résumé :</strong>
@@ -163,32 +162,22 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from "vue";
 
-// Référence pour toutes les participations (pour la recherche globale)
 const allHistorique = ref([]);
-// Participations affichées (filtrées par semestre ou non)
 const historique = ref([]);
 const searchQuery = ref("");
-
-// Sélection du semestre et pagination
 const selectedSemestre = ref(null);
 const selectedYearStart = ref(null);
 const selectedYearEnd = ref(null);
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
-
-// Popup de suivi
 const selectedSuivi = ref(null);
 const suiviVisible = ref(false);
-
-// Données des semestres et regroupement
 const semestres = ref([]);
 const groupedSemestres = ref([]);
 
-// Regroupement des semestres par groupe FIE/FIA
 function computeGroupedSemestres() {
   const groups = {
     "FIE 1": [],
@@ -200,17 +189,11 @@ function computeGroupedSemestres() {
 
   semestres.value.forEach(sem => {
     const nb = parseInt(sem.nbSemestre, 10);
-    if (nb === 1 || nb === 2) {
-      groups["FIE 1"].push(sem);
-    } else if (nb === 3 || nb === 4) {
-      groups["FIE 2"].push(sem);
-    } else if (nb === 5 || nb === 6) {
-      groups["FIE 3/FIA 3"].push(sem);
-    } else if (nb === 7 || nb === 8) {
-      groups["FIE 4/FIA 4"].push(sem);
-    } else if (nb === 9 || nb === 10) {
-      groups["FIE 5/FIA 5"].push(sem);
-    }
+    if (nb === 1 || nb === 2) groups["FIE 1"].push(sem);
+    else if (nb === 3 || nb === 4) groups["FIE 2"].push(sem);
+    else if (nb === 5 || nb === 6) groups["FIE 3/FIA 3"].push(sem);
+    else if (nb === 7 || nb === 8) groups["FIE 4/FIA 4"].push(sem);
+    else if (nb === 9 || nb === 10) groups["FIE 5/FIA 5"].push(sem);
   });
 
   groupedSemestres.value = Object.keys(groups).map(key => ({
@@ -226,8 +209,34 @@ async function getSemestres() {
     semestres.value = await res.json();
     computeGroupedSemestres();
   } catch (error) {
-    console.error("Erreur lors de la récupération des semestres :", error);
+    console.error("Erreur récupération semestres:", error);
   }
+}
+
+async function enrichParticipation(part) {
+  const [etudiantRes, actionRes, semestreRes] = await Promise.all([
+    fetch(`http://localhost:8989/api/etudiants/${part.id.idEtudiant}`),
+    fetch(`http://localhost:8989/api/actions/${part.id.idAction}`),
+    fetch(`http://localhost:8989/api/semestres/${part.id.idSemestre}`)
+  ]);
+
+  const [etudiant, action, semData] = await Promise.all([
+    etudiantRes.json(),
+    actionRes.json(),
+    semestreRes.json()
+  ]);
+
+  part.etudiant = etudiant;
+  part.action = action;
+  part.semestre = semData;
+
+  if (action.idReferentiel) {
+    const refRes = await fetch(`http://localhost:8989/api/referentiels/${action.idReferentiel}`);
+    action.referentiel = await refRes.json();
+  }
+
+  // Remplacer totalPoints par pointsAction si disponible
+  part.pointAction= part.pointAction || 0;
 }
 
 async function getAllParticipations() {
@@ -237,34 +246,16 @@ async function getAllParticipations() {
     const enriched = [];
     for (const part of data) {
       try {
-        const [etudiantRes, actionRes, semestreRes] = await Promise.all([
-          fetch(`http://localhost:8989/api/etudiants/${part.id.idEtudiant}`),
-          fetch(`http://localhost:8989/api/actions/${part.id.idAction}`),
-          fetch(`http://localhost:8989/api/semestres/${part.id.idSemestre}`)
-        ]);
-        const [etudiant, action, semData] = await Promise.all([
-          etudiantRes.json(),
-          actionRes.json(),
-          semestreRes.json()
-        ]);
-        part.etudiant = etudiant;
-        part.action = action;
-        part.semestre = semData;
-        if (action.idReferentiel) {
-          const refRes = await fetch(`http://localhost:8989/api/referentiels/${action.idReferentiel}`);
-          action.referentiel = await refRes.json();
-        }
+        await enrichParticipation(part);
         enriched.push(part);
       } catch (error) {
-        console.error("Erreur lors de l'enrichissement d'une participation :", error);
+        console.error("Erreur enrichissement:", error);
       }
     }
     allHistorique.value = enriched;
-    if (!selectedSemestre.value) {
-      historique.value = enriched;
-    }
+    if (!selectedSemestre.value) historique.value = enriched;
   } catch (error) {
-    console.error("Erreur lors de la récupération des participations :", error);
+    console.error("Erreur récupération participations:", error);
   }
 }
 
@@ -274,44 +265,25 @@ async function setSemestreFilter(sem) {
   const year = d.getFullYear();
   selectedYearStart.value = year;
   selectedYearEnd.value = year + 1;
+
   try {
     const res = await fetch(
       `http://localhost:8989/api/participes/byYearAndSemestre?year=${year}&semestre=${sem.nbSemestre}`
     );
-    if (!res.ok) {
-      console.error("Erreur lors de la récupération filtrée :", res.statusText);
-      return;
-    }
     const data = await res.json();
     const enriched = [];
     for (const part of data) {
       try {
-        const [etudiantRes, actionRes, semestreRes] = await Promise.all([
-          fetch(`http://localhost:8989/api/etudiants/${part.id.idEtudiant}`),
-          fetch(`http://localhost:8989/api/actions/${part.id.idAction}`),
-          fetch(`http://localhost:8989/api/semestres/${part.id.idSemestre}`)
-        ]);
-        const [etudiant, action, semData] = await Promise.all([
-          etudiantRes.json(),
-          actionRes.json(),
-          semestreRes.json()
-        ]);
-        part.etudiant = etudiant;
-        part.action = action;
-        part.semestre = semData;
-        if (action.idReferentiel) {
-          const refRes = await fetch(`http://localhost:8989/api/referentiels/${action.idReferentiel}`);
-          action.referentiel = await refRes.json();
-        }
+        await enrichParticipation(part);
         enriched.push(part);
       } catch (error) {
-        console.error("Erreur lors de l'enrichissement d'une participation filtrée :", error);
+        console.error("Erreur enrichissement filtre:", error);
       }
     }
     historique.value = enriched;
     currentPage.value = 1;
   } catch (error) {
-    console.error("Erreur fetch dans setSemestreFilter :", error);
+    console.error("Erreur fetch dans setSemestreFilter:", error);
   }
 }
 
@@ -321,16 +293,13 @@ function applyLocalFilter() {
 
 const filteredParticipations = computed(() => {
   const baseList = searchQuery.value.trim() ? allHistorique.value : historique.value;
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase();
-    return baseList.filter((part) => {
-      const nom = (part.etudiant?.nom || "").toLowerCase();
-      const promo = (part.etudiant?.promotion || "").toLowerCase();
-      const actionName = (part.action?.referentiel?.nom || part.action?.nom || "").toLowerCase();
-      return nom.includes(q) || promo.includes(q) || actionName.includes(q);
-    });
-  }
-  return baseList;
+  const q = searchQuery.value.toLowerCase();
+  return baseList.filter((part) => {
+    const nom = (part.etudiant?.nom || "").toLowerCase();
+    const promo = (part.etudiant?.promotion || "").toLowerCase();
+    const actionName = (part.action?.referentiel?.nom || part.action?.nom || "").toLowerCase();
+    return nom.includes(q) || promo.includes(q) || actionName.includes(q);
+  });
 });
 
 const totalPages = computed(() =>
@@ -382,14 +351,25 @@ function showSuiviPopup(item) {
 onMounted(async () => {
   await getAllParticipations();
   await getSemestres();
+
+  setInterval(async () => {
+    if (!selectedSemestre.value) {
+      await getAllParticipations();
+    } else {
+      await setSemestreFilter({
+        nbSemestre: selectedSemestre.value,
+        anneeUniversitaire: `${selectedYearStart.value}-09-01`,
+      });
+    }
+  }, 30000);
 });
 </script>
 
 <style scoped>
 /* 📌 Sidebar fine et moderne */
 .sidebar {
-  width: 240px; /* Largeur légèrement augmentée */
-  background-color: #ffffff; /* Fond blanc épuré */
+  width: 240px;
+  background-color: #ffffff;
   padding: 24px;
   border-right: 1px solid #eaeef3;
   position: fixed;
@@ -400,7 +380,7 @@ onMounted(async () => {
 .sidebar h3 {
   font-size: 18px;
   margin-bottom: 24px;
-  color: #2c3e50; /* Texte sombre et élégant */
+  color: #2c3e50;
   font-weight: 600;
   letter-spacing: -0.5px;
 }
@@ -576,7 +556,7 @@ onMounted(async () => {
   background: #f5f5f5;
 }
 
-/* 📌 Bouton Information : emoji sans encadrement */
+/* 📌 Bouton Information */
 .info-emoji {
   cursor: pointer;
   font-size: 18px;
@@ -598,22 +578,28 @@ onMounted(async () => {
   justify-content: center;
   align-items: center;
   margin-top: 20px;
+  gap: 10px;
 }
 
 .pagination-button {
-  padding: 8px 15px;
-  background-color: #3182ce;
+  padding: 10px 20px;
+  background-color: #6a3fa0;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  margin: 0 10px;
+  font-size: 14px;
   transition: background-color 0.3s ease;
+  font-weight: 500;
 }
 
 .pagination-button:disabled {
   background-color: #cbd5e0;
   cursor: not-allowed;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #5a2f90;
 }
 
 .page-indicator {
