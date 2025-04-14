@@ -102,6 +102,10 @@
 
 <script>
 import jsPDF from 'jspdf';
+import logoUrl from '@/Images/logo-ISIS-vertical-RVB-HD.png';
+import { imageToBase64 } from '@/utils/base.js';
+
+
 
 export default {
   name: 'SaisirFicheView',
@@ -223,19 +227,121 @@ export default {
       this.fiche.dateFin = '';
       this.fiche.description = '';
     },
-    downloadPDF() {
-      const doc = new jsPDF();
-      doc.text("Fiche descriptive Ingénieur Engagé", 10, 10);
-      doc.text(`Étudiant: ${this.etudiant.nom} ${this.etudiant.prenom}`, 10, 20);
-      doc.text(`Semestre: ${this.fiche.semestre}`, 10, 30);
-      doc.text(`Référentiel: ${this.fiche.referentiel}`, 10, 40);
-      doc.text(`Action: ${this.fiche.action}`, 10, 50);
-      doc.text(`Date de début: ${this.fiche.dateDebut}`, 10, 60);
-      doc.text(`Date de fin: ${this.fiche.dateFin}`, 10, 70);
-      doc.text(`Description: ${this.fiche.description}`, 10, 80);
-      doc.save('fiche_ingenieur_engage.pdf');
-      this.showPopup = false;
-    }
+    async downloadPDF() {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const margin = 20;
+  let y = margin;
+
+  // ✅ Logo bien dimensionné
+  const logo = await imageToBase64(logoUrl);
+  const logoWidth = 35;
+  const logoHeight = logoWidth * 1.48;
+  doc.addImage(logo, 'PNG', margin, y, logoWidth, logoHeight);
+
+  // ✅ Titre à droite du logo
+  const titleX = margin + logoWidth + 10;
+  const titleY = y + 10;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(17);
+  doc.setTextColor(40, 40, 40);
+  doc.text('FICHE DESCRIPTIVE', titleX, titleY);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
+  doc.setTextColor(106, 63, 160);
+  doc.text('Ingénieur Engagé', titleX, titleY + 7);
+
+  // Décalage après le logo
+  y += logoHeight + 12;
+
+  // 🔹 Ligne de séparation
+  doc.setDrawColor(200);
+  doc.line(margin, y, 190, y);
+
+  // 🔹 Infos Étudiant
+  y += 10;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(0);
+  doc.text('Informations Étudiant', margin, y);
+
+  y += 6;
+  doc.setDrawColor(230);
+  doc.setFillColor(248, 248, 248);
+  doc.roundedRect(margin, y - 3, 170, 16, 3, 3, 'FD');
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(50);
+  doc.text(`Nom : ${this.etudiant.nom}`, margin + 4, y + 5);
+  doc.text(`Prénom : ${this.etudiant.prenom}`, 120, y + 5);
+
+  // 🔹 Bloc Participation
+  y += 20;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(0);
+  doc.text('Participation', margin, y);
+
+  y += 6;
+  doc.setDrawColor(230);
+  doc.setFillColor(248, 248, 248);
+  doc.roundedRect(margin, y - 3, 170, 25, 3, 3, 'FD');
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(60);
+  doc.text(`Semestre : S${this.fiche.semestre}`, margin + 4, y + 5);
+  doc.text(`Référentiel : ${this.fiche.referentiel}`, 120, y + 5);
+  doc.text(`Action : ${this.fiche.action}`, margin + 4, y + 12);
+  doc.text(`Date début : ${this.fiche.dateDebut}`, 120, y + 12);
+  doc.text(`Date fin : ${this.fiche.dateFin}`, 120, y + 19);
+
+  // 🔹 Bloc Description
+  y += 32;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(0);
+  doc.text('Description de la participation', margin, y);
+
+  y += 6;
+  const description = doc.splitTextToSize(this.fiche.description, 170);
+  const descHeight = description.length * 6 + 8;
+  doc.setDrawColor(210);
+  doc.setFillColor(245, 245, 245);
+  doc.roundedRect(margin, y - 3, 170, descHeight, 4, 4, 'FD');
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.setTextColor(50);
+  doc.text(description, margin + 4, y + 5);
+
+  // 🔹 Signatures
+  y += descHeight + 20;
+  doc.setDrawColor(220);
+  doc.line(margin + 5, y, 80, y); // Étudiant
+  doc.line(120, y, 185, y);      // Scolarité
+
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text("Signature Étudiant", margin + 5, y + 5);
+  doc.text("Visa Service Scolarité", 120, y + 5);
+
+  // 🔹 Pied de page
+  doc.setFontSize(9);
+  doc.setTextColor(140);
+  const today = new Date().toLocaleDateString('fr-FR');
+  doc.text(`Document généré le ${today}`, margin, 290);
+
+  // ✅ Génération
+  doc.save(`Fiche_${this.etudiant.nom}_${this.etudiant.prenom}.pdf`);
+  this.showPopup = false;
+}
+
+
+
   }
 };
 </script>
