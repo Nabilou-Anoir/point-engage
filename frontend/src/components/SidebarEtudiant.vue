@@ -78,9 +78,10 @@ const userInitials = computed(() => {
 
 const menuItems = ref([
   { path: '/etudiant/saisir-fiche', text: 'Saisir une fiche', icon: 'fas fa-file-upload' },
-  { path: '/etudiant/historique-fiches', text: 'Consulter l’historique des fiches', icon: 'fas fa-history' }
-]);
+  { path: '/etudiant/historique-fiches', text: 'Historique des fiches', icon: 'fas fa-history' },
+  { path: '/etudiant/mes-demandes', text: 'Mes demandes', icon: 'fas fa-demande' }
 
+]);
 const isActive = (path) => route.path === path;
 const navigateToDashboard = () => router.push('/etudiant/accueil');
 </script>

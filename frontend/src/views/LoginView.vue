@@ -111,6 +111,14 @@ export default {
           sessionStorage.setItem("loggedInUser", JSON.stringify(user));
           const role = typeof user.role === "object" ? user.role.name : user.role;
 
+          if (role === "ROLE_REFERENT") {
+            const refRes = await axios.get(`http://localhost:8989/api/referents/email/${user.email}`);
+            const referent = refRes.data;
+            localStorage.setItem("referentId", referent.idReferent); // ✅ stocke l'ID pour le chargement dans referentAcceuil.vue
+            router.push("/referent/accueil");
+            return;
+          }
+
           switch (role) {
             case "ROLE_ETUDIANT":
               router.push("/etudiant/accueil");
@@ -118,9 +126,9 @@ export default {
             case "ROLE_DIRECTEUR":
               router.push("/directeur/accueil");
               break;
-            case "ROLE_REFERENT":
-              router.push("/referent/accueil");
-              break;
+            // case "ROLE_REFERENT":
+            //   router.push("/referent/accueil");
+            //   break;
             case "ROLE_SERVICE_SCOLARITE":
               router.push("/scolarite/accueil");
               break;

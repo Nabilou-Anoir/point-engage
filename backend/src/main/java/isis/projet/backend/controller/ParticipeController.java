@@ -1,7 +1,11 @@
 package isis.projet.backend.controller;
 
 import java.util.List;
+import java.util.Map;
 
+import isis.projet.backend.dao.ReferentRepository;
+import isis.projet.backend.entity.Referent;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,6 +26,7 @@ import isis.projet.backend.entity.ParticipeKey;
 import isis.projet.backend.service.ParticipeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/participes")
@@ -126,5 +131,30 @@ public class ParticipeController {
         List<Participe> participes = participeRepository.findByIdReferent(idReferent);
         return ResponseEntity.ok(participes);
     }
+    @Autowired
+    private ReferentRepository referentRepository;
 
+    @PutMapping("/{idEtudiant}/{idAction}/{idSemestre}/referent")
+    public ResponseEntity<?> assignReferentToParticipe(
+            @PathVariable Integer idEtudiant,
+            @PathVariable Integer idAction,
+            @PathVariable Integer idSemestre,
+            @RequestBody Map<String, Integer> request) {
+
+        Integer idReferent = request.get("idReferent");
+        ParticipeKey key = new ParticipeKey(idEtudiant, idAction, idSemestre);
+
+        Participe participe = participeService.findById(key);
+        if (participe == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // ✅ Correction : récupérer le vrai référent depuis la BDD
+        Referent ref = referentRepository.findById(idReferent)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Référent introuvable"));
+
+        participe.setReferent(ref);
+        participeService.save(participe);
+        return ResponseEntity.ok().build();
+    }
 }

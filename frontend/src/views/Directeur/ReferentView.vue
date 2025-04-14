@@ -1,16 +1,8 @@
 <template>
   <div class="referent-view">
-    <!-- Barre de recherche et filtres -->
+    <!-- Filtres -->
     <div class="search-and-filter">
       <input type="text" v-model="searchQuery" placeholder="Rechercher un élève..." class="search-input" />
-      <select v-model="selectedFilter" class="filter-select">
-        <option value="">Tous les types d'engagement</option>
-        <option v-for="ref in referents" :key="ref.idReferent" :value="ref.nom">{{ ref.nom }}</option>
-      </select>
-      <select v-model="selectedPromotion" class="filter-select">
-        <option value="">Toutes les promotions</option>
-        <option v-for="promo in availablePromotions" :key="promo">{{ promo }}</option>
-      </select>
     </div>
 
     <!-- Tableau -->
@@ -44,7 +36,7 @@
       <button @click="nextPage" :disabled="currentPage === totalPages">&gt;</button>
     </div>
 
-    <!-- Modale Détails -->
+    <!-- Modale Détail -->
     <div v-if="isModalOpen" class="modal-overlay">
       <div class="modal-content">
         <span class="close-modal" @click="closeModal">&times;</span>
@@ -119,8 +111,7 @@ export default {
     },
     paginatedStudents() {
       const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredStudents.slice(start, end);
+      return this.filteredStudents.slice(start, start + this.itemsPerPage);
     },
     totalPages() {
       return Math.ceil(this.filteredStudents.length / this.itemsPerPage);
@@ -144,9 +135,7 @@ export default {
             try {
               const ref = await axios.get(`http://localhost:8989/api/referentiels/${p.idReferentiel}`);
               referentielNom = ref.data.nom || 'Non défini';
-            } catch (err) {
-              console.warn('Référentiel non trouvé pour id', p.idReferentiel);
-            }
+            } catch (err) {}
           }
 
           return {
@@ -162,7 +151,6 @@ export default {
             semestreId: semestre.data.idSemestre,
           };
         } catch (e) {
-          console.error('Erreur sur une participation :', e);
           return null;
         }
       }));
@@ -173,7 +161,7 @@ export default {
       const refRes = await axios.get('http://localhost:8989/api/referents');
       this.referents = refRes.data;
     } catch (error) {
-      console.error('Erreur de chargement des données :', error);
+      console.error('Erreur chargement données :', error);
     }
   },
   methods: {
@@ -197,15 +185,16 @@ export default {
         alert('Veuillez sélectionner un référent.');
         return;
       }
+
       try {
-        await axios.put(`http://localhost:8989/api/actions/${this.selectedStudent.actionId}/referents`, {
+        await axios.put(`http://localhost:8989/api/participes/${this.selectedStudent.etudiantId}/${this.selectedStudent.actionId}/${this.selectedStudent.semestreId}/referent`, {
           idReferent: this.selectedReferentId,
         });
+
         alert('Référent associé avec succès !');
         this.closeChooseModal();
       } catch (error) {
-        console.error('Erreur association référent :', error);
-        alert("Une erreur est survenue lors de l'association.");
+        alert("Erreur lors de l'association.");
       }
     },
     previousPage() {
@@ -221,6 +210,4 @@ export default {
 };
 </script>
 
-
-<style scoped src="./ReferentView.css">
-</style>
+<style scoped src="./ReferentView.css"></style>

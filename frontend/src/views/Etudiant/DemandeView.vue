@@ -1,9 +1,9 @@
 <template>
   <div class="activities-container">
-    <h1>Historique des fiches</h1>
+    <h1>Mes demandes </h1>
 
 <!--    <p v-if="etudiant">-->
-<!--      <strong>étudiant connecté :</strong> {{ etudiant.nom }} {{ etudiant.prenom }}-->
+<!--      <strong> Vous êtes connecté:</strong> {{ etudiant.nom }} {{ etudiant.prenom }}-->
 <!--    </p>-->
 
     <div class="search-filter">
@@ -37,9 +37,8 @@
           </td>
           <td>{{ formatDate(item.dateDebutParticipation) }}</td>
           <td class="text-right">
-            <span v-if="item.statut === true" class="status-valid">Validé</span>
-            <span v-else-if="item.statut === false" class="status-pending">Refusé</span>
-            <span v-else class="status-default">En attente</span>
+            <!-- Ici, on affiche uniquement "En attente" car le filtre sélectionne uniquement le statut null -->
+            <span class="status-default">En attente</span>
           </td>
           <td class="text-right">
             <span class="points">{{ item.totalPoints || 0 }} pts</span>
@@ -68,7 +67,7 @@
     <!-- Popup pour afficher les détails de l'action -->
     <div v-if="actionPopupVisible" class="modal-overlay">
       <div class="modal-content">
-        <h2>Details de l'Action</h2>
+        <h2>Détails de l'action</h2>
         <p>
           <strong>Nom de l'action :</strong>
           {{ selectedAction?.action?.nom || 'N/A' }}
@@ -90,10 +89,13 @@
     <!-- Popup pour le suivi de la fiche -->
     <div v-if="suiviVisible" class="modal-overlay">
       <div class="modal-content">
-        <h2>Suivi de la Participation</h2>
+        <h2>Suivi de la participation</h2>
         <p><strong>Action :</strong> {{ selectedSuivi?.action?.nom || 'N/A' }}</p>
-        <p><strong>Date de Réalisation :</strong> {{ formatDate(selectedSuivi?.dateDebutParticipation) }}</p>
-        <p><strong>Remarque Référent :</strong> {{ selectedSuivi?.remarqueReferent || 'Aucune remarque' }}</p>
+        <p><strong>Date de réalisation :</strong> {{ formatDate(selectedSuivi?.dateDebutParticipation) }}</p>
+        <p>
+          <strong>Remarque référent :</strong>
+          {{ selectedSuivi?.remarqueReferent || 'Aucune remarque' }}
+        </p>
         <button class="modal-close-button" @click="suiviVisible = false">
           Fermer
         </button>
@@ -123,7 +125,9 @@ async function getHistorique() {
   const etuRes = await fetch(`http://localhost:8989/api/etudiants/byEmail?email=${loggedInUser.email}`);
   const etudiantData = await etuRes.json();
   etudiant.value = etudiantData;
-  const partRes = await fetch(`http://localhost:8989/api/participes/search/findByIdIdEtudiant?idEtudiant=${etudiantData.idEtudiant}`);
+  const partRes = await fetch(
+    `http://localhost:8989/api/participes/search/findByIdIdEtudiant?idEtudiant=${etudiantData.idEtudiant}`
+  );
   const data = await partRes.json();
   const participations = data._embedded?.participes || [];
   for (const item of participations) {
@@ -143,9 +147,9 @@ function formatDate(dateStr) {
 
 const filteredHistorique = computed(() => {
   return historique.value
-    // Ne conserver que les fiches avec statut Validé (true) ou Refusé (false)
-    .filter(item => item.statut === true || item.statut === false)
-    // Appliquer le filtre de recherche sur le nom de l'action
+    // Ne conserver que les participations avec statut null (en attente)
+    .filter(item => item.statut === null)
+    // Appliquer le filtre de recherche sur le nom de l'action, si renseigné
     .filter(item =>
       !searchQuery.value ||
       (item.action?.nom?.toLowerCase().includes(searchQuery.value.toLowerCase()))
@@ -161,6 +165,7 @@ const paginatedHistorique = computed(() => {
 function nextPage() {
   if (currentPage.value < totalPages.value) currentPage.value++;
 }
+
 function prevPage() {
   if (currentPage.value > 1) currentPage.value--;
 }

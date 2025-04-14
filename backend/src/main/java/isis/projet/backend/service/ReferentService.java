@@ -9,6 +9,7 @@ import org.springframework.web.server.ResponseStatusException;
 import jakarta.transaction.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service pour la gestion des entités Referent.
@@ -78,5 +79,8 @@ public class ReferentService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Référent non trouvé avec id : " + id);
         }
         referentRepository.deleteById(id);
+    }
+    public Optional<Referent> findByEmail(String email) {
+        return referentRepository.findByEmail(email);
     }
 }
