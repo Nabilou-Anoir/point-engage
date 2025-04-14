@@ -10,24 +10,24 @@
       />
     </div>
 
-    <!-- 📅 Header avec titre et bouton -->
-    <div class="header">
-      <h2> Les semestres</h2>
-      <button class="btn-add" @click="openModal('add')">➕ Ajouter une semestre</button>
-    </div>
-
-    <!-- 🗓️ Saisie des dates de dépôt globales -->
+    <!--  Saisie des dates de dépôt globales -->
     <div class="global-dates">
-      <label>Date début dépôt (global)</label>
-      <Datepicker v-model="globalDebutDepot" autoApply format="yyyy-MM-dd" />
+      <div class="date-row">
+        <div>
+          <label>Date début dépôt (global)</label>
+          <Datepicker v-model="globalDebutDepot" autoApply format="yyyy-MM-dd" />
+        </div>
+        <div>
+          <label>Date fin dépôt (global)</label>
+          <Datepicker v-model="globalFinDepot" autoApply format="yyyy-MM-dd" />
+        </div>
+      </div>
 
-      <label>Date fin dépôt (global)</label>
-      <Datepicker v-model="globalFinDepot" autoApply format="yyyy-MM-dd" />
-
-      <button class="btn-confirm" @click="applyGlobalDates">📝 Appliquer à tous</button>
+      <button class="btn-confirm" @click="applyGlobalDates"> Appliquer à tous</button>
     </div>
 
-    <!-- 📌 Tableau des semestres -->
+
+    <!--  Tableau des semestres -->
     <div class="table-wrapper">
       <table class="semestres-table">
         <thead>
@@ -56,7 +56,7 @@
       </table>
     </div>
 
-    <!-- 🛠️ MODALE pour ajouter/éditer une semestre -->
+    <!--  MODALE pour ajouter/éditer une semestre -->
     <div v-if="showModal" class="modal-overlay">
       <div class="modal-content">
         <h3>{{ modalType === 'add' ? '➕ Ajouter une semestre' : '✏️ Modifier la semestre' }}</h3>
@@ -85,8 +85,8 @@
         <Datepicker v-model="currentSemestre.dateFinSemestre" autoApply format="yyyy-MM-dd" />
 
         <div class="modal-actions">
-          <button class="btn-confirm" @click="saveSemestre">✅ Confirmer</button>
-          <button class="btn-cancel" @click="closeModal">❌ Annuler</button>
+          <button class="btn-confirm" @click="saveSemestre"> Confirmer</button>
+          <button class="btn-cancel" @click="closeModal"> Annuler</button>
         </div>
       </div>
     </div>
@@ -147,7 +147,7 @@ const closeModal = () => {
 const saveSemestre = async () => {
   const s = currentSemestre.value;
   if (!s.nbSemestre || !s.dateDebutSemestre || !s.dateFinSemestre) {
-    alert("🚨 Veuillez remplir tous les champs obligatoires !");
+    alert(" Veuillez remplir tous les champs obligatoires !");
     return;
   }
   try {

@@ -1,31 +1,36 @@
 /* ✅ Conteneur principal */
 .semestres-container {
-  padding: 20px;
+  padding: 30px;
   font-family: 'Inter', sans-serif;
   max-width: 1300px;
   margin: 0 auto;
   background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
 }
 
 /* ✅ Barre de recherche */
 .search-bar {
   display: flex;
   justify-content: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .search-input {
   width: 50%;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 14px 16px;
+  border-radius: 10px;
   border: 1px solid #ddd;
   font-size: 16px;
-  transition: 0.3s;
+  transition: all 0.3s ease;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
 .search-input:focus {
-  border-color: #6a3fa0;
-  box-shadow: 0 0 5px rgba(106, 63, 160, 0.5);
+  border-color: #6A3FA0;
+  box-shadow: 0 0 8px rgba(106, 63, 160, 0.3);
+  outline: none;
 }
 
 /* ✅ Header */
@@ -33,54 +38,58 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .btn-add {
-  background: #ED6962;
+  background-color: #ED6962;
   color: white;
-  padding: 10px;
+  padding: 12px 18px;
   border: none;
-  border-radius: 5px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
-  transition: 0.3s;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .btn-add:hover {
-  background: #6A3FA0;
+  background-color: #6A3FA0;
+  transform: translateY(-2px);
 }
 
-/* ✅ Scroll pour le tableau */
+/* ✅ Scroll zone */
 .table-wrapper {
-  max-height: 350px;
+  max-height: 400px;
   overflow-y: auto;
   border-radius: 10px;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.03);
 }
 
 /* ✅ Tableau des semestres */
 .semestres-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background-color: white;
   border-radius: 10px;
   overflow: hidden;
 }
 
 .semestres-table th,
 .semestres-table td {
-  padding: 12px;
+  padding: 14px 16px;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #eee;
+  font-size: 15px;
 }
 
 .semestres-table th {
-  background: #f8f8f8;
-  font-weight: bold;
+  background-color: #f8f8f8;
+  font-weight: 600;
 }
 
 .semestres-table td {
-  background: white;
+  background-color: white;
 }
 
 .actions {
@@ -90,17 +99,20 @@
 /* ✅ Icônes */
 .icon {
   cursor: pointer;
-  margin: 0 5px;
+  margin: 0 6px;
   font-size: 18px;
-  transition: 0.3s;
+  transition: transform 0.2s, color 0.2s;
+  color: #555;
 }
 
 .edit:hover {
-  color: #6a3fa0;
+  color: #6A3FA0;
+  transform: scale(1.1);
 }
 
 .delete:hover {
   color: #d7443a;
+  transform: scale(1.1);
 }
 
 /* ✅ Modale */
@@ -110,77 +122,92 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
-  animation: fadeIn 0.3s;
+  animation: fadeIn 0.3s ease;
+  z-index: 999;
 }
 
 .modal-content {
-  background: white;
-  padding: 25px;
+  background-color: white;
+  padding: 28px;
   border-radius: 12px;
-  width: 350px;
+  width: 360px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
 .modal-content label {
   display: block;
-  margin: 10px 0 5px;
-  font-weight: bold;
+  margin: 12px 0 6px;
+  font-weight: 600;
+  text-align: left;
 }
 
 .modal-content input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 8px;
+  font-size: 15px;
+  background-color: #f9f9f9;
 }
 
 .modal-actions {
   display: flex;
   justify-content: space-between;
-  margin-top: 15px;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.btn-confirm,
+.btn-cancel {
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  flex: 1;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s, opacity 0.2s;
 }
 
 .btn-confirm {
-  background: #6A3FA0;
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  flex: 1;
-  margin-right: 10px;
+  background-color: #6A3FA0;
 }
 
 .btn-cancel {
-  background: #ED6962;
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  flex: 1;
+  background-color: #ED6962;
+}
+
+.btn-confirm:hover,
+.btn-cancel:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
 }
 
 /* ✅ Animation */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-/* ✅ Liste déroulante stylée, cohérente avec le reste */
+/* ✅ Select stylé */
 .custom-select-wrapper {
   position: relative;
   width: 100%;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .custom-select {
   appearance: none;
   width: 100%;
-  padding: 10px 14px;
-  font-size: 16px;
+  padding: 12px 16px;
+  font-size: 15px;
   border: 2px solid #ED6962;
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: white;
   color: #333;
   font-weight: 500;
@@ -198,14 +225,60 @@
   box-shadow: 0 0 0 3px rgba(106, 63, 160, 0.2);
 }
 
-/* Flèche de select personnalisée */
+/* Flèche custom */
 .custom-select-wrapper::after {
   content: "▼";
   position: absolute;
   top: 50%;
-  right: 15px;
+  right: 18px;
   transform: translateY(-50%);
-  font-size: 12px;
+  font-size: 13px;
   color: #6A3FA0;
   pointer-events: none;
 }
+
+.global-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.date-row {
+  display: flex;
+  gap: 20px; /* Espace entre les deux inputs */
+}
+
+.date-row > div {
+  flex: 1;
+}
+
+.datepicker {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.datepicker:focus {
+  border-color: #6A3FA0;
+  box-shadow: 0 0 0 3px rgba(106, 63, 160, 0.1);
+}
+
+.btn-confirm {
+  background: #6A3FA0;
+  color: white;
+  padding: 8px 12px;  /* Réduit la taille du padding pour un bouton plus petit */
+  border-radius: 5px;
+  font-size: 14px;  /* Réduit la taille du texte */
+  cursor: pointer;
+  transition: 0.3s;
+  width: 150px;
+}
+
+.btn-confirm:hover {
+  background: #6A3FA0;
+}
+
