@@ -1,5 +1,5 @@
 <template>
-  <div class="main-content">
+  <div class="main-content" style="margin-left: 40px;">
     <h2 class="title">Points cumulés</h2>
 
     <!-- Zone de recherche -->
@@ -16,18 +16,18 @@
     <div class="table-container">
       <table class="custom-table">
         <thead>
-        <tr>
-          <th @click="sortTable('name')">Nom</th>
-          <th @click="sortTable('promotion')">Promotion</th>
-          <th @click="sortTable('totalPoints')">Total</th>
-        </tr>
+          <tr>
+            <th @click="sortTable('name')">Nom</th>
+            <th @click="sortTable('promotion')">Promotion</th>
+            <th @click="sortTable('totalPoints')">Total</th>
+          </tr>
         </thead>
         <tbody>
-        <tr v-for="student in paginatedStudents" :key="student.etudiantId">
-          <td>{{ student.name }}</td>
-          <td>{{ student.promotion }}</td>
-          <td>{{ student.totalPoints.toFixed(2) }}</td>
-        </tr>
+          <tr v-for="student in paginatedStudents" :key="student.etudiantId">
+            <td>{{ student.name }}</td>
+            <td>{{ student.promotion }}</td>
+            <td>{{ student.totalPoints.toFixed(2) }}</td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -40,7 +40,7 @@
     </div>
 
     <!-- Bouton d'envoi au service scolarité -->
-    <div class="send-section">
+    <div class="send-section" >
       <button class="send-btn" @click="envoyerAuServiceScolarite">
         Envoyer au service de scolarité
       </button>
@@ -62,6 +62,7 @@
     </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";

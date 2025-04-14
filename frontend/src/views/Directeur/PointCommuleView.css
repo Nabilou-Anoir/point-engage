@@ -91,7 +91,7 @@
 
 .send-section {
   display: flex;
-  justify-content: center;
+  justify-content: right;
   margin-top: 30px;
 }
 
