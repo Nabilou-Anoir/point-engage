@@ -61,6 +61,9 @@
                     class="styled-checkbox"
                   />
                 </td>
+                <td>
+                  <a href="#" @click.prevent="openStudentModal(student)">{{ student.name }}</a>
+                </td>
               </tr>
               <tr v-if="elevesFiltres.length === 0">
                 <td colspan="7">Aucune participation trouvée.</td>
