@@ -103,12 +103,6 @@
             <div class="detail-label">Description de la participation:</div>
             <div class="detail-value">{{ selectedStudent.descriptionParticipation }}</div>
           </div>
-          <div class="detail-row">
-            <div class="detail-label">Date de soumission:</div>
-            <div class="detail-value">
-              {{ selectedStudent.dateSoumission || 'Non disponible' }}
-            </div>
-          </div>
         </div>
         <button class="modal-btn" @click="showModal = false">Fermer</button>
       </div>
