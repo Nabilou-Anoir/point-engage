@@ -86,6 +86,7 @@ const navigateToDashboard = () => router.push('/etudiant/accueil');
 </script>
 
 <style scoped>
+/* src/assets/styles/sidebar.css */
 .sidebar {
   width: 220px;
   height: 100vh;
@@ -119,6 +120,7 @@ const navigateToDashboard = () => router.push('/etudiant/accueil');
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.3s ease;
+  flex-wrap: wrap;
 }
 
 .user-info:hover {
