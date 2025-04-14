@@ -69,6 +69,27 @@
           </table>
         </div>
       </div>
+          <!-- Modal d'affichage des détails de l'étudiant -->
+    <div v-if="showModal" class="modal-overlay">
+      <div class="modal">
+        <h3>Détails de l'étudiant</h3>
+        <div class="modal-body" v-if="selectedStudent">
+          <div class="detail-row">
+            <div class="detail-label">Nom:</div>
+            <div class="detail-value">{{ selectedStudent.name }}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Action:</div>
+            <div class="detail-value">{{ getActionName(selectedStudent.idAction) }}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Description de la participation:</div>
+            <div class="detail-value">{{ selectedStudent.descriptionParticipation }}</div>
+          </div>
+        </div>
+        <button class="modal-btn" @click="showModal = false">Fermer</button>
+      </div>
+    </div>
     </main>
   </div>
 </template>
@@ -119,15 +140,15 @@ const fetchParticipations = async () => {
           semestreId: p.id.idSemestre,
         };
       } catch (err) {
-        console.error("⛔ Erreur chargement élève :", err);
+        console.error(" Erreur chargement élève :", err);
         return null;
       }
     }));
 
     eleves.value = eleveList.filter(Boolean);
-    console.log("✅ Élèves à afficher :", eleves.value);
+    console.log(" Élèves à afficher :", eleves.value);
   } catch (error) {
-    console.error("❌ Erreur chargement participations :", error);
+    console.error(" Erreur chargement participations :", error);
   }
 };
 
@@ -153,6 +174,10 @@ const validerEnvoi = async (eleve) => {
     eleve.envoye = false; // rollback si échec
   }
 };
+openStudentModal(student) {
+      this.selectedStudent = student;
+      this.showModal = true;
+    }
 
 onMounted(fetchParticipations);
 </script>
