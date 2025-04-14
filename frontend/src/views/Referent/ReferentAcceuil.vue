@@ -3,25 +3,6 @@
     <main class="main-content">
       <!-- 🎛️ Filtres -->
       <div class="top-filter">
-        <div class="filter-group">
-          <label class="selectlabel">Semestre</label>
-          <div class="select-container">
-            <select v-model="selectedSemestre" class="select-input">
-              <option value="1">Semestre 1</option>
-              <option value="2">Semestre 2</option>
-            </select>
-          </div>
-        </div>
-        <div class="filter-group">
-          <label class="selectlabel">Année universitaire</label>
-          <div class="select-container">
-            <select v-model="selectedAnnee" class="select-input">
-              <option value="2024/2025">2024/2025</option>
-              <option value="2023/2024">2023/2024</option>
-              <option value="2022/2023">2022/2023</option>
-            </select>
-          </div>
-        </div>
         <div class="right-group">
           <div class="search-container">
             <input
