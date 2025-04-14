@@ -22,76 +22,85 @@
         <div class="table-container">
           <table class="styled-table">
             <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Promotion</th>
-                <th>Type</th>
-                <th>Fiche descriptive</th>
-                <th>Validé par référent</th>
-                <th>Remarque référent</th>
-                <th>Envoyer</th>
-              </tr>
+            <tr>
+              <th>Nom</th>
+              <th>Promotion</th>
+              <th>Type</th>
+              <th>Fiche descriptive</th>
+              <th>Validé par référent</th>
+              <th>Remarque référent</th>
+              <th>Envoyer</th>
+            </tr>
             </thead>
             <tbody>
-              <tr v-for="(eleve, index) in elevesFiltres" :key="index">
-                <td>
-                  <a href="#" @click.prevent="openStudentModal(student)">{{ student.name }}</a>
-                </td>
-                <td>{{ eleve.promotion }}</td>
-                <td>{{ eleve.typeEngagement }}</td>
-                <td>
+            <tr v-for="(eleve, index) in elevesFiltres" :key="index">
+              <td>
+                <a href="#" @click.prevent="openStudentModal(eleve)">{{ eleve.nom }}</a>
+              </td>
+              <td>{{ eleve.promotion }}</td>
+              <td>{{ eleve.typeEngagement }}</td>
+              <td>
                   <span @click="toggleFicheVisible(eleve)" class="eye-icon">
                     {{ eleve.ficheVisible ? "👁️" : "👁️‍🗨️" }}
                   </span>
-                </td>
-                <td>
-                  <input type="checkbox" v-model="eleve.valide" class="styled-checkbox" />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    v-model="eleve.remarqueReferent"
-                    class="text-input"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="checkbox"
-                    v-model="eleve.envoye"
-                    @change="validerEnvoi(eleve)"
-                    :disabled="eleve.envoye"
-                    class="styled-checkbox"
-                  />
-                </td>
-              </tr>
-              <tr v-if="elevesFiltres.length === 0">
-                <td colspan="7">Aucune participation trouvée.</td>
-              </tr>
+              </td>
+              <td>
+                <input type="checkbox" v-model="eleve.valide" class="styled-checkbox" />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  v-model="eleve.remarqueReferent"
+                  class="text-input"
+                />
+              </td>
+              <td>
+                <input
+                  type="checkbox"
+                  v-model="eleve.envoye"
+                  @change="validerEnvoi(eleve)"
+                  :disabled="eleve.envoye"
+                  class="styled-checkbox"
+                />
+              </td>
+            </tr>
+            <tr v-if="elevesFiltres.length === 0">
+              <td colspan="7">Aucune participation trouvée.</td>
+            </tr>
             </tbody>
           </table>
         </div>
       </div>
-          <!-- Modal d'affichage des détails de l'étudiant -->
-    <div v-if="showModal" class="modal-overlay">
-      <div class="modal">
-        <h3>Détails de l'étudiant</h3>
-        <div class="modal-body" v-if="selectedStudent">
-          <div class="detail-row">
-            <div class="detail-label">Nom:</div>
-            <div class="detail-value">{{ selectedStudent.name }}</div>
+
+      <!-- Modal d'affichage des détails de l'étudiant -->
+      <div v-if="showModal" class="modal-overlay">
+        <div class="modal">
+          <h3>Détails de l'étudiant</h3>
+          <div class="modal-body" v-if="selectedStudent">
+            <div class="detail-row">
+              <div class="detail-label">Nom:</div>
+              <div class="detail-value">{{ selectedStudent.nom }}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Type d'engagement:</div>
+              <div class="detail-value">{{ selectedStudent.typeEngagement }}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Promotion:</div>
+              <div class="detail-value">{{ selectedStudent.promotion }}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Remarque référent:</div>
+              <div class="detail-value">{{ selectedStudent.remarqueReferent }}</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Description de la participation:</div>
+              <div class="detail-value">{{ selectedStudent.descriptionParticipation }}</div>
+            </div>
           </div>
-          <div class="detail-row">
-            <div class="detail-label">Action:</div>
-            <div class="detail-value">{{ getActionName(selectedStudent.idAction) }}</div>
-          </div>
-          <div class="detail-row">
-            <div class="detail-label">Description de la participation:</div>
-            <div class="detail-value">{{ selectedStudent.descriptionParticipation }}</div>
-          </div>
+          <button class="modal-btn" @click="showModal = false">Fermer</button>
         </div>
-        <button class="modal-btn" @click="showModal = false">Fermer</button>
       </div>
-    </div>
     </main>
   </div>
 </template>
@@ -102,7 +111,6 @@ import axios from "axios";
 
 const baseURL = "http://localhost:8989/api";
 
-// 🔐 Référent connecté (à remplacer par une vraie auth ou localStorage)
 const referentId = localStorage.getItem("referentId") || 1;
 
 const eleves = ref([]);
@@ -111,9 +119,16 @@ const selectedSemestre = ref("1");
 const selectedAnnee = ref("2024/2025");
 const dateDebut = ref("");
 const dateFin = ref("");
+const selectedStudent = ref(null);
+const showModal = ref(false);
 
 const toggleFicheVisible = (eleve) => {
   eleve.ficheVisible = !eleve.ficheVisible;
+};
+
+const openStudentModal = (student) => {
+  selectedStudent.value = student;
+  showModal.value = true;
 };
 
 const fetchParticipations = async () => {
@@ -135,6 +150,7 @@ const fetchParticipations = async () => {
           typeEngagement: referentiel.data.nom || "N/A",
           ficheVisible: false,
           remarqueReferent: p.remarqueReferent || "",
+          descriptionParticipation: p.descriptionParticipation || "",
           valide: p.statut ?? false,
           envoye: false,
           etudiantId: p.id.idEtudiant,
@@ -154,7 +170,6 @@ const fetchParticipations = async () => {
   }
 };
 
-// 🔍 À adapter avec filtres si besoin
 const elevesFiltres = computed(() => eleves.value);
 
 const validerEnvoi = async (eleve) => {
@@ -173,13 +188,9 @@ const validerEnvoi = async (eleve) => {
   } catch (e) {
     console.error("❌ Erreur d’envoi :", e.response?.data || e.message);
     alert("Erreur lors de l’envoi.");
-    eleve.envoye = false; // rollback si échec
+    eleve.envoye = false;
   }
 };
-openStudentModal(student) {
-      this.selectedStudent = student;
-      this.showModal = true;
-    }
 
 onMounted(fetchParticipations);
 </script>
