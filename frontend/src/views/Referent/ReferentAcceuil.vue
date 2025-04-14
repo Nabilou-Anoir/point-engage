@@ -34,7 +34,9 @@
             </thead>
             <tbody>
               <tr v-for="(eleve, index) in elevesFiltres" :key="index">
-                <td>{{ eleve.nom }}</td>
+                <td>
+                  <a href="#" @click.prevent="openStudentModal(student)">{{ student.name }}</a>
+                </td>
                 <td>{{ eleve.promotion }}</td>
                 <td>{{ eleve.typeEngagement }}</td>
                 <td>
@@ -60,9 +62,6 @@
                     :disabled="eleve.envoye"
                     class="styled-checkbox"
                   />
-                </td>
-                <td>
-                  <a href="#" @click.prevent="openStudentModal(student)">{{ student.name }}</a>
                 </td>
               </tr>
               <tr v-if="elevesFiltres.length === 0">
