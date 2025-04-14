@@ -19,16 +19,6 @@
         <span>Accueil</span>
       </router-link>
 
-      <!-- Bouton Profil : affichage du profil de l'utilisateur connecté -->
-      <router-link
-        to="/scolarite/profil"
-        class="nav-link"
-        :class="{ active: isActive('/scolarite/profil') }"
-      >
-        <i class="fas fa-user"></i>
-        <span>{{ userData.name || "Profil" }}</span>
-      </router-link>
-
       <!-- Bouton Déconnexion avec popup -->
       <div class="nav-link logout-link" ref="logoutRef">
         <div @click="toggleDropdown">
