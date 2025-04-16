@@ -11,7 +11,7 @@
       <SidebarEtudiant v-if="isEtudiant && showLayout" />
       <SidebarDirecteur v-else-if="isDirecteur && showLayout" />
 
-      <!-- Contenu principal plein écran (si pas de sidebar) -->
+      <!-- Contenu principal pl    ein écran (si pas de sidebar) -->
       <div class="main-content" :class="{ 'full-width': !hasSidebar }">
         <router-view />
       </div>
